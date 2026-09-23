@@ -8,6 +8,7 @@ import {
 } from '../types/business.ts';
 import { FinancialPlan, CapexBreakdown, OpexMonthlyBreakdown } from '../types/financial.ts';
 import { GovernmentScheme, SchemeCalculationResult } from '../types/schemes.ts';
+import { SchemeMatchingInput, SchemeMatchingResult } from '../types/scheme.ts';
 import { LoanProduct } from '../types/loans.ts';
 import { DistrictIntelligence } from '../types/location.ts';
 import { AgriLocationAnalysis } from '../types/agriLocation.ts';
@@ -144,6 +145,14 @@ class ApiClient {
     return this.request<SchemeCalculationResult>('/api/schemes/evaluate', {
       method: 'POST',
       body: JSON.stringify(params)
+    });
+  }
+
+  // Phase 7: Deterministic Scheme & Loan Matching
+  public async matchSchemes(input: SchemeMatchingInput): Promise<SchemeMatchingResult> {
+    return this.request<SchemeMatchingResult>('/api/schemes/match', {
+      method: 'POST',
+      body: JSON.stringify(input)
     });
   }
 

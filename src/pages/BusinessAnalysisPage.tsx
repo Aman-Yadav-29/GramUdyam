@@ -42,6 +42,7 @@ import { deriveCapexBreakdown, deriveMonthlyOpex } from '../utils/financialEngin
 import { BudgetDiscoveryEngine } from '../components/BudgetDiscoveryEngine.tsx';
 import { LocationGisCatchmentMap } from '../components/LocationGisCatchmentMap.tsx';
 import { AgricultureLocationAnalysisCard } from '../components/AgricultureLocationAnalysisCard.tsx';
+import { SchemeMatchingSection } from '../components/SchemeMatchingSection.tsx';
 import { CalculatedBusinessPlan } from '../types/business.ts';
 import { FinancialScenarioType } from '../types/financial.ts';
 
@@ -1090,44 +1091,18 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               </div>
             )}
 
-            {/* 4. GOVERNMENT SCHEMES */}
+            {/* 4. GOVERNMENT SCHEMES & LOANS (PHASE 7) */}
             {activeTab === 'schemes' && (
-              <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-6">
-                <h3 className="font-heading text-lg font-bold text-stone-900">
-                  Applicable Government Credit Subsidies
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="rounded-xl border border-purple-200 bg-purple-50/40 p-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-purple-900 text-sm">PMEGP Scheme</span>
-                      <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">
-                        Up to 35% Subsidy
-                      </span>
-                    </div>
-                    <p className="text-xs text-stone-600 mb-3">
-                      Prime Minister Employment Generation Programme. Margin money subsidy deposited in 3-year term deposit receipt.
-                    </p>
-                    <div className="text-xs text-stone-700 font-medium">
-                      Calculated Subsidy for this Project: <strong className="text-purple-900 font-bold">{formatINRLakhs(financialPlan.eligibleSubsidyEstimate)}</strong>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-emerald-900 text-sm">PMFME Scheme</span>
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                        35% Grant Capped at ₹10L
-                      </span>
-                    </div>
-                    <p className="text-xs text-stone-600 mb-3">
-                      PM Formalisation of Micro Food Processing Enterprises Scheme under MoFPI. Dedicated to ODOP and micro-clusters.
-                    </p>
-                    <div className="text-xs text-stone-700 font-medium">
-                      Maximum Grant Cap: <strong className="text-emerald-900 font-bold">₹10,00,000</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SchemeMatchingSection
+                businessId={selectedEnterprise.id}
+                businessName={selectedEnterprise.name}
+                capitalAvailable={capitalAvailable ?? 0}
+                totalProjectCost={financialPlan.totalProjectCost}
+                financingGap={financialPlan.bankTermLoanRequired ?? Math.max(0, financialPlan.totalProjectCost - (capitalAvailable ?? 0))}
+                state={state}
+                district={district}
+                locationType={locationType}
+              />
             )}
 
             {/* 5. LOAN DISCOVERY & EMI */}
