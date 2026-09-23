@@ -22,7 +22,8 @@ import {
   Zap,
   Droplets,
   Truck,
-  X
+  X,
+  Sprout
 } from 'lucide-react';
 import { 
   BudgetDiscoveryResult, 
@@ -642,6 +643,19 @@ const BusinessFinancialCard: React.FC<BusinessFinancialCardProps> = ({ plan, onS
               <span className="truncate">Source: {locationFit.rawMaterialSynergy.provenance.source.slice(0, 30)}...</span>
               <span className="shrink-0 font-bold">({locationFit.rawMaterialSynergy.provenance.geographicLevel.replace(' estimate', '')})</span>
             </div>
+          </div>
+        )}
+
+        {/* Phase 6: Agriculture Location Intelligence Indicator */}
+        {plan.agriLocationAnalysis && (
+          <div className="mt-2 flex items-center justify-between rounded-lg bg-emerald-50/50 border border-emerald-200/80 px-2 py-1 text-3xs text-emerald-900 font-medium">
+            <span className="flex items-center gap-1 font-bold">
+              <Sprout className="h-3 w-3 text-emerald-700" />
+              <span>Agri Factors:</span>
+            </span>
+            <span>
+              {plan.agriLocationAnalysis.whyMaySuit.length} Supportive factors (District-level)
+            </span>
           </div>
         )}
 

@@ -32,7 +32,8 @@ import {
   Plus,
   Minus,
   Sliders,
-  AlertTriangle
+  AlertTriangle,
+  Sprout
 } from 'lucide-react';
 import { useBusinessAnalysis } from '../hooks/useBusinessAnalysis.ts';
 import { useAuth } from '../hooks/useAuth.ts';
@@ -40,6 +41,7 @@ import { formatINR, formatINRLakhs, formatPercent, formatRatio } from '../utils/
 import { deriveCapexBreakdown, deriveMonthlyOpex } from '../utils/financialEngine.ts';
 import { BudgetDiscoveryEngine } from '../components/BudgetDiscoveryEngine.tsx';
 import { LocationGisCatchmentMap } from '../components/LocationGisCatchmentMap.tsx';
+import { AgricultureLocationAnalysisCard } from '../components/AgricultureLocationAnalysisCard.tsx';
 import { CalculatedBusinessPlan } from '../types/business.ts';
 import { FinancialScenarioType } from '../types/financial.ts';
 
@@ -71,6 +73,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
     selectedEnterprise,
     selectEnterprise,
     districtData,
+    agriLocationAnalysis,
     financialPlan,
     matchedLoans,
     scenario,
@@ -439,13 +442,20 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('location')}
-              className={`pb-2.5 border-b-2 cursor-pointer transition ${
+              className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
                 activeTab === 'location'
                   ? 'border-emerald-600 text-emerald-800'
                   : 'border-transparent text-stone-500 hover:text-stone-800'
               }`}
             >
-              Location Analysis
+              {agriLocationAnalysis ? (
+                <>
+                  <Sprout className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Location & Agriculture Analysis</span>
+                </>
+              ) : (
+                <span>Location Analysis</span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab('schemes')}
@@ -546,6 +556,25 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
                     <p className="text-sm text-stone-700 leading-relaxed mt-4">
                       {selectedEnterprise.description}
                     </p>
+
+                    {/* Phase 6: Agriculture Location Intelligence Badge */}
+                    {agriLocationAnalysis && (
+                      <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Sprout className="h-4 w-4 text-emerald-700 shrink-0" />
+                          <span className="text-stone-800">
+                            <strong>Agriculture Location Analysis Active:</strong> {agriLocationAnalysis.whyMaySuit.length} supportive factors identified in {district}, {state}.
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('location')}
+                          className="inline-flex items-center gap-1 font-bold text-emerald-800 hover:text-emerald-950 text-xs shrink-0 cursor-pointer underline underline-offset-2"
+                        >
+                          View Factor Evaluation
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
 
                     <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-stone-100 pt-5 text-xs">
                       <div>
@@ -1042,6 +1071,11 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
             {/* 3. LOCATION ANALYSIS */}
             {activeTab === 'location' && (
               <div className="space-y-6">
+                {/* Phase 6: Agriculture-Specific Location Analysis */}
+                {agriLocationAnalysis && (
+                  <AgricultureLocationAnalysisCard analysis={agriLocationAnalysis} />
+                )}
+
                 {districtData ? (
                   <LocationGisCatchmentMap
                     districtData={districtData}

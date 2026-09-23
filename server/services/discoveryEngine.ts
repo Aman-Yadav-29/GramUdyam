@@ -17,6 +17,7 @@ import {
 } from '../../src/utils/financialFormulas.ts';
 import { evaluateEnterpriseLocationSynergy } from '../../src/utils/locationIntelligenceEngine.ts';
 import { locationGisService } from './locationGisService.ts';
+import { agriLocationService } from './agriLocationService.ts';
 
 export interface DiscoveryConfig {
   /**
@@ -173,14 +174,39 @@ export function calculateBusinessPlanForCapital(
     }
   }
 
+  // Resolve effective district intelligence and location query
+  const effectiveDistrictIntel = districtIntel || 
+    ((locationQuery as any)?.agroClimaticZone || (locationQuery as any)?.waterAvailabilityScore 
+      ? (locationQuery as unknown as DistrictIntelligence) 
+      : undefined);
+  const effectiveLocationQuery = (locationQuery as any)?.agroClimaticZone ? undefined : locationQuery;
+
   // Phase 5: Location Fit Assessment
   let locationFit = undefined;
-  if (districtIntel) {
-    locationFit = evaluateEnterpriseLocationSynergy(business, districtIntel, {
-      locationType: locationQuery?.locationType,
-      villageOrTown: locationQuery?.villageOrTown,
-      subDistrictOrBlock: locationQuery?.subDistrictOrBlock
+  if (effectiveDistrictIntel) {
+    locationFit = evaluateEnterpriseLocationSynergy(business, effectiveDistrictIntel, {
+      locationType: effectiveLocationQuery?.locationType,
+      villageOrTown: effectiveLocationQuery?.villageOrTown,
+      subDistrictOrBlock: effectiveLocationQuery?.subDistrictOrBlock
     });
+  }
+
+  // Phase 6: Agriculture-Specific Location Analysis
+  let agriLocationAnalysis = undefined;
+  if (effectiveDistrictIntel) {
+    const agri = agriLocationService.analyzeAgriLocation(
+      business,
+      effectiveDistrictIntel.state,
+      effectiveDistrictIntel.district,
+      {
+        locationType: effectiveLocationQuery?.locationType,
+        villageOrTown: effectiveLocationQuery?.villageOrTown,
+        subDistrictOrBlock: effectiveLocationQuery?.subDistrictOrBlock
+      }
+    );
+    if (agri) {
+      agriLocationAnalysis = agri;
+    }
   }
 
   return {
@@ -202,7 +228,8 @@ export function calculateBusinessPlanForCapital(
     affordabilityTier,
     affordabilityReason,
     scaling: evaluateBusinessScaling(business, availableCapital, config),
-    locationFit
+    locationFit,
+    agriLocationAnalysis
   };
 }
 

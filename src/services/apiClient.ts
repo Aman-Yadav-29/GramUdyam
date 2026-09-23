@@ -10,6 +10,7 @@ import { FinancialPlan, CapexBreakdown, OpexMonthlyBreakdown } from '../types/fi
 import { GovernmentScheme, SchemeCalculationResult } from '../types/schemes.ts';
 import { LoanProduct } from '../types/loans.ts';
 import { DistrictIntelligence } from '../types/location.ts';
+import { AgriLocationAnalysis } from '../types/agriLocation.ts';
 import { AuthSession, UserAccount } from '../types/auth.ts';
 
 const SESSION_STORAGE_KEY = 'gramudyam_auth_session';
@@ -162,6 +163,26 @@ class ApiClient {
 
   public async getLocationMetadata(): Promise<{ states: string[] }> {
     return this.request<{ states: string[] }>('/api/gis/metadata');
+  }
+
+  // Phase 6: Agriculture Location Intelligence
+  public async getAgriLocationAnalysis(params: {
+    businessId: string;
+    state: string;
+    district: string;
+    subDistrictOrBlock?: string;
+    villageOrTown?: string;
+    locationType?: 'rural' | 'semi_urban' | 'urban';
+  }): Promise<AgriLocationAnalysis | null> {
+    const query = new URLSearchParams({
+      businessId: params.businessId,
+      state: params.state,
+      district: params.district,
+      ...(params.subDistrictOrBlock ? { subDistrictOrBlock: params.subDistrictOrBlock } : {}),
+      ...(params.villageOrTown ? { villageOrTown: params.villageOrTown } : {}),
+      ...(params.locationType ? { locationType: params.locationType } : {})
+    });
+    return this.request<AgriLocationAnalysis | null>(`/api/gis/agri-analysis?${query.toString()}`);
   }
 
   // Auth Endpoints

@@ -1,5 +1,6 @@
 import { ScalingRecommendation, MultiScenarioProjections } from './financial.ts';
 import { LocationFitAssessment, GisLocationQuery } from './location.ts';
+import { AgriLocationAnalysis } from './agriLocation.ts';
 
 export type IndustryCategory = 
   | 'agro_processing'
@@ -134,6 +135,9 @@ export interface CalculatedBusinessPlan {
 
   // Phase 5: Location Intelligence & GIS Fit Assessment
   locationFit?: LocationFitAssessment;
+
+  // Phase 6: Agriculture-Specific Location Analysis
+  agriLocationAnalysis?: AgriLocationAnalysis;
 }
 
 export interface BudgetDiscoveryResult {

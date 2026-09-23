@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { EnterpriseIdea, DiscoveryResult } from '../types/business.ts';
 import { DistrictIntelligence } from '../types/location.ts';
+import { AgriLocationAnalysis } from '../types/agriLocation.ts';
 import { FinancialPlan, FinancialScenarioType } from '../types/financial.ts';
 import { apiClient } from '../services/apiClient.ts';
 import { POPULAR_INDIAN_STATES } from '../data/locationBenchmarksData.ts';
@@ -22,6 +23,7 @@ export function useBusinessAnalysis() {
   const [discoveryResult, setDiscoveryResult] = useState<DiscoveryResult | null>(null);
   const [selectedEnterprise, setSelectedEnterprise] = useState<EnterpriseIdea | null>(null);
   const [districtData, setDistrictData] = useState<DistrictIntelligence | null>(null);
+  const [agriLocationAnalysis, setAgriLocationAnalysis] = useState<AgriLocationAnalysis | null>(null);
   const [financialPlan, setFinancialPlan] = useState<FinancialPlan | null>(null);
   const [matchedLoans, setMatchedLoans] = useState<any[]>([]);
 
@@ -33,7 +35,7 @@ export function useBusinessAnalysis() {
     scaleUnits?: number
   ) => {
     try {
-      const [finResult, districtIntel] = await Promise.all([
+      const [finResult, districtIntel, agriAnalysis] = await Promise.all([
         apiClient.calculateFinancialPlan({
           enterpriseId: enterprise.id,
           capitalAvailable: capital,
@@ -44,17 +46,26 @@ export function useBusinessAnalysis() {
           scenario: currentScenario,
           customScaleUnits: scaleUnits
         }),
-        apiClient.getDistrictData(state, district)
+        apiClient.getDistrictData(state, district),
+        apiClient.getAgriLocationAnalysis({
+          businessId: enterprise.id,
+          state,
+          district,
+          subDistrictOrBlock,
+          villageOrTown,
+          locationType
+        }).catch(() => null)
       ]);
       setFinancialPlan(finResult.plan);
       setDistrictData(districtIntel);
+      setAgriLocationAnalysis(agriAnalysis);
 
       const loans = await apiClient.matchLoans(finResult.plan.bankTermLoanRequired, promoterCategory === 'special');
       setMatchedLoans(loans);
     } catch (err: any) {
       console.warn('Could not compute financial plan:', err);
     }
-  }, [promoterCategory, locationType, state, district]);
+  }, [promoterCategory, locationType, state, district, subDistrictOrBlock, villageOrTown]);
 
   // Run discovery (for older / legacy views if needed)
   const runDiscovery = useCallback(async () => {
@@ -142,6 +153,7 @@ export function useBusinessAnalysis() {
     selectedEnterprise,
     selectEnterprise,
     districtData,
+    agriLocationAnalysis,
     financialPlan,
     matchedLoans,
     refreshAnalysis: runDiscovery

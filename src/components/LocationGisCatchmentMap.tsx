@@ -182,6 +182,9 @@ export const LocationGisCatchmentMap: React.FC<LocationGisCatchmentMapProps> = (
             <span>• Highway Access (Amber)</span>
             <span>Active Catchment: ≤ {selectedRadius} km</span>
           </div>
+          <p className="text-3xs text-stone-400/90 text-center mt-1.5 px-2">
+            * Concentric rings depict illustrative radial distance bands from district reference coordinates, not surveyed geodesic boundaries. Mandi positions are representative trading nodes.
+          </p>
         </div>
 
         {/* Catchment Metrics & Mandi Directory */}
