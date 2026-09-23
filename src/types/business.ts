@@ -1,4 +1,5 @@
 import { ScalingRecommendation, MultiScenarioProjections } from './financial.ts';
+import { LocationFitAssessment, GisLocationQuery } from './location.ts';
 
 export type IndustryCategory = 
   | 'agro_processing'
@@ -16,7 +17,8 @@ export type DiscoverySortOption =
   | 'highest_profit'
   | 'lowest_gap'
   | 'shortest_payback'
-  | 'highest_roi';
+  | 'highest_roi'
+  | 'location_relevance';
 
 /**
  * Structured Business Template
@@ -129,6 +131,9 @@ export interface CalculatedBusinessPlan {
   // Phase 4: Business Scaling & Multi-Scenario Projections
   scaling?: ScalingRecommendation;
   scenarios?: MultiScenarioProjections;
+
+  // Phase 5: Location Intelligence & GIS Fit Assessment
+  locationFit?: LocationFitAssessment;
 }
 
 export interface BudgetDiscoveryResult {
@@ -138,6 +143,7 @@ export interface BudgetDiscoveryResult {
   limitedFinancing: CalculatedBusinessPlan[];
   higherInvestment: CalculatedBusinessPlan[];
   activeSort: DiscoverySortOption;
+  location?: GisLocationQuery;
   counts: {
     fitsBudget: number;
     limitedFinancing: number;

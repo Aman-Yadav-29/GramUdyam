@@ -5,8 +5,18 @@ import {
   AffordabilityTier, 
   DiscoverySortOption 
 } from '../../src/types/business.ts';
+import { GisLocationQuery, DistrictIntelligence } from '../../src/types/location.ts';
 import { BUSINESS_TEMPLATES } from '../../src/data/businessTemplates.ts';
 import { evaluateBusinessScaling } from '../../src/utils/scalingEngine.ts';
+import {
+  calculateTotalProjectCost,
+  calculateFinancingGap,
+  calculateEmi as calculateFormulasEmi,
+  calculateDscr,
+  calculateBreakEven
+} from '../../src/utils/financialFormulas.ts';
+import { evaluateEnterpriseLocationSynergy } from '../../src/utils/locationIntelligenceEngine.ts';
+import { locationGisService } from './locationGisService.ts';
 
 export interface DiscoveryConfig {
   /**
@@ -47,14 +57,10 @@ export const DEFAULT_DISCOVERY_CONFIG: DiscoveryConfig = {
 };
 
 /**
- * Calculates reducing balance Equated Monthly Installment (EMI)
+ * Calculates reducing balance Equated Monthly Installment (EMI) using authoritative formula
  */
 export function calculateEmi(principal: number, annualRate: number, tenureMonths: number): number {
-  if (principal <= 0) return 0;
-  const monthlyRate = annualRate / 12;
-  const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths)) / 
-              (Math.pow(1 + monthlyRate, tenureMonths) - 1);
-  return Math.round(emi);
+  return calculateFormulasEmi(principal, annualRate * 100, tenureMonths).monthlyEmi;
 }
 
 /**
@@ -63,14 +69,20 @@ export function calculateEmi(principal: number, annualRate: number, tenureMonths
 export function calculateBusinessPlanForCapital(
   business: BusinessTemplate,
   availableCapital: number,
-  config: DiscoveryConfig = DEFAULT_DISCOVERY_CONFIG
+  config: DiscoveryConfig = DEFAULT_DISCOVERY_CONFIG,
+  locationQuery?: GisLocationQuery,
+  districtIntel?: DistrictIntelligence
 ): CalculatedBusinessPlan {
-  // 1. Total Project Cost
-  const projectCost = business.fixedAssets.totalFixedAssets + business.workingCapital.totalWorkingCapital;
+  // 1. Total Project Cost (MANDATORY RULE: Total Project Cost = CapEx + Working Capital Requirement)
+  const projectCost = calculateTotalProjectCost(
+    business.fixedAssets.totalFixedAssets, 
+    business.workingCapital.totalWorkingCapital
+  );
   
-  // 2. Financing Gap
-  const financingGap = Math.max(0, projectCost - availableCapital);
-  const promoterEquityPercent = Math.min(100, Math.round((availableCapital / projectCost) * 100));
+  // 2. Financing Gap Formula: Total Project Cost - Available Capital
+  const gapAnalysis = calculateFinancingGap(projectCost, availableCapital);
+  const financingGap = gapAnalysis.financingGap;
+  const promoterEquityPercent = gapAnalysis.promoterContributionPercent;
 
   // 3. Monthly Operational Figures
   const monthlyRevenue = business.revenueAssumptions.expectedMonthlyRevenue;
@@ -80,7 +92,7 @@ export function calculateBusinessPlanForCapital(
   const annualDepreciation = (business.fixedAssets.equipmentCost * 0.15) + (business.fixedAssets.infrastructureCost * 0.05);
   const monthlyDepreciation = Math.round(annualDepreciation / 12);
 
-  // 5. Debt Service & EMI
+  // 5. Debt Service & EMI (Calculated strictly on actual financing gap)
   const monthlyEmi = financingGap > 0 
     ? calculateEmi(financingGap, config.annualInterestRate, config.loanTenureMonths)
     : 0;
@@ -105,7 +117,6 @@ export function calculateBusinessPlanForCapital(
     : 9.9;
 
   // 8. Break-even capacity utilization
-  // Calculated as percentage of rated operating capacity required to cover fixed operating costs and interest
   const monthlyFixedCosts = Math.round(
     business.operatingCosts.laborAndWagesMonthly +
     (business.operatingCosts.utilitiesAndPowerMonthly * 0.4) +
@@ -119,23 +130,17 @@ export function calculateBusinessPlanForCapital(
     (business.operatingCosts.repairAndMaintenanceMonthly * 0.5) +
     business.operatingCosts.freightAndLogisticsMonthly
   );
-  const contributionMargin = monthlyRevenue - monthlyVariableCosts;
   const currentCapacityUtilization = business.revenueAssumptions.capacityUtilizationPercent || 80;
-  let breakEvenPercent: number;
-  if (contributionMargin <= 0) {
-    breakEvenPercent = 100;
-  } else {
-    // Percentage of installed full operating capacity needed to cover fixed costs
-    const breakEvenCapacity = (monthlyFixedCosts / contributionMargin) * currentCapacityUtilization;
-    breakEvenPercent = Number(Math.max(0, breakEvenCapacity).toFixed(1));
-  }
+  const beAnalysis = calculateBreakEven(monthlyRevenue, monthlyFixedCosts, monthlyVariableCosts, currentCapacityUtilization);
+  const breakEvenPercent = beAnalysis.breakEvenSalesPercent ?? 100;
 
   // 9. Debt Service Coverage Ratio (DSCR)
   let dscr: number | null = null;
   if (financingGap > 0) {
     const annualDebtService = monthlyEmi * 12;
     const annualCashAvailableForDebt = (monthlyNetProfit + monthlyDepreciation + monthlyInterest) * 12;
-    dscr = annualDebtService > 0 ? Number((annualCashAvailableForDebt / annualDebtService).toFixed(2)) : null;
+    const dscrAnalysis = calculateDscr(annualCashAvailableForDebt, annualDebtService);
+    dscr = dscrAnalysis.dscr;
   }
 
   // 10. Affordability Classification
@@ -168,6 +173,16 @@ export function calculateBusinessPlanForCapital(
     }
   }
 
+  // Phase 5: Location Fit Assessment
+  let locationFit = undefined;
+  if (districtIntel) {
+    locationFit = evaluateEnterpriseLocationSynergy(business, districtIntel, {
+      locationType: locationQuery?.locationType,
+      villageOrTown: locationQuery?.villageOrTown,
+      subDistrictOrBlock: locationQuery?.subDistrictOrBlock
+    });
+  }
+
   return {
     business,
     projectCost,
@@ -186,7 +201,8 @@ export function calculateBusinessPlanForCapital(
     dscr,
     affordabilityTier,
     affordabilityReason,
-    scaling: evaluateBusinessScaling(business, availableCapital, config)
+    scaling: evaluateBusinessScaling(business, availableCapital, config),
+    locationFit
   };
 }
 
@@ -209,6 +225,16 @@ export function sortBusinessPlans(
       return sorted.sort((a, b) => a.paybackYears - b.paybackYears);
     case 'highest_roi':
       return sorted.sort((a, b) => b.roi - a.roi);
+    case 'location_relevance':
+      return sorted.sort((a, b) => {
+        const scoreA = a.locationFit?.locationScore ?? 50;
+        const scoreB = b.locationFit?.locationScore ?? 50;
+        if (scoreB !== scoreA) {
+          return scoreB - scoreA;
+        }
+        // Secondary tiebreaker: highest profit
+        return b.monthlyNetProfit - a.monthlyNetProfit;
+      });
     default:
       return sorted;
   }
@@ -227,6 +253,7 @@ export function discoverBusinessesByBudget(
     sortBy?: DiscoverySortOption;
     config?: Partial<DiscoveryConfig>;
     businesses?: BusinessTemplate[];
+    location?: GisLocationQuery;
   }
 ): BudgetDiscoveryResult {
   if (availableCapital === undefined || availableCapital === null || typeof availableCapital !== 'number' || isNaN(availableCapital) || availableCapital <= 0) {
@@ -241,12 +268,18 @@ export function discoverBusinessesByBudget(
 
   const businessTemplates = options?.businesses || BUSINESS_TEMPLATES;
 
+  // Retrieve district intelligence if location specified
+  let districtIntel: DistrictIntelligence | undefined = undefined;
+  if (options?.location?.state && options?.location?.district) {
+    districtIntel = locationGisService.getDistrictData(options.location.state, options.location.district);
+  }
+
   // 1. Calculate financials for ALL configured businesses
   const evaluatedPlans = businessTemplates.map((template) =>
-    calculateBusinessPlanForCapital(template, availableCapital, mergedConfig)
+    calculateBusinessPlanForCapital(template, availableCapital, mergedConfig, options?.location, districtIntel)
   );
 
-  // 2. Separate into the 3 Affordability Tiers
+  // 2. Separate into the 3 Affordability Tiers (STRICT RULE: Financial Affordability is never overridden by Location)
   const fitsBudget = evaluatedPlans.filter((p) => p.affordabilityTier === 'FITS_BUDGET');
   const limitedFinancing = evaluatedPlans.filter((p) => p.affordabilityTier === 'LIMITED_FINANCING');
   const higherInvestment = evaluatedPlans.filter((p) => p.affordabilityTier === 'HIGHER_INVESTMENT');
@@ -263,6 +296,7 @@ export function discoverBusinessesByBudget(
     limitedFinancing: sortedLimitedFinancing,
     higherInvestment: sortedHigherInvestment,
     activeSort,
+    location: options?.location,
     counts: {
       fitsBudget: fitsBudget.length,
       limitedFinancing: limitedFinancing.length,

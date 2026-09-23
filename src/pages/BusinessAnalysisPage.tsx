@@ -21,14 +21,27 @@ import {
   Clock,
   UserCheck,
   LogIn,
-  LogOut
+  LogOut,
+  Calculator,
+  Percent,
+  BarChart3,
+  Layers,
+  Table,
+  TrendingDown,
+  TrendingUp,
+  Plus,
+  Minus,
+  Sliders,
+  AlertTriangle
 } from 'lucide-react';
 import { useBusinessAnalysis } from '../hooks/useBusinessAnalysis.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 import { formatINR, formatINRLakhs, formatPercent, formatRatio } from '../utils/formatters.ts';
 import { deriveCapexBreakdown, deriveMonthlyOpex } from '../utils/financialEngine.ts';
 import { BudgetDiscoveryEngine } from '../components/BudgetDiscoveryEngine.tsx';
+import { LocationGisCatchmentMap } from '../components/LocationGisCatchmentMap.tsx';
 import { CalculatedBusinessPlan } from '../types/business.ts';
+import { FinancialScenarioType } from '../types/financial.ts';
 
 interface BusinessAnalysisPageProps {
   onBackToHome: () => void;
@@ -46,6 +59,8 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
     setState,
     district,
     setDistrict,
+    villageOrTown,
+    setVillageOrTown,
     locationType,
     setLocationType,
     promoterCategory,
@@ -57,16 +72,20 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
     selectEnterprise,
     districtData,
     financialPlan,
-    matchedLoans
+    matchedLoans,
+    scenario,
+    setScenario,
+    customScaleUnits,
+    setCustomScaleUnits
   } = useBusinessAnalysis();
 
   const { user, isGuest, isAuthenticated, logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState<
-    'discovery' | 'overview' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap'
+    'discovery' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap'
   >('discovery');
 
-  const capex = financialPlan ? deriveCapexBreakdown(financialPlan.totalProjectCost) : null;
+  const capex = financialPlan ? deriveCapexBreakdown(financialPlan.fixedAssetsCost) : null;
   const opex = financialPlan ? deriveMonthlyOpex(financialPlan.annualOperatingCostYear1) : null;
 
   return (
@@ -157,6 +176,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               </button>
             </div>
 
+            {/* Location & Demographic Parameters for DPR */}
             <div className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 shadow-xs">
               <div className="text-xs font-bold text-stone-700 uppercase tracking-wider mb-3">
                 Location & Demographic Parameters for DPR
@@ -216,6 +236,159 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Phase 4: Financial Engine Scenario Selector & Business Scaling Interactive Controller */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* 1. Interactive Scenario Switcher */}
+              <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Sliders className="h-4 w-4 text-emerald-800" />
+                    <span className="text-xs font-bold text-stone-800 uppercase tracking-wider">
+                      Financial Risk Scenario
+                    </span>
+                  </div>
+                  <span className="text-3xs font-semibold text-stone-500 uppercase bg-stone-100 px-2 py-0.5 rounded">
+                    Live Recalculation
+                  </span>
+                </div>
+                <p className="text-2xs text-stone-500 mb-3">
+                  Changing assumptions immediately recalculates revenue, expenses, net profit, EMI, and DSCR.
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setScenario('conservative')}
+                    className={`px-2.5 py-2 rounded-xl text-xs font-bold transition flex flex-col items-center cursor-pointer border ${
+                      scenario === 'conservative'
+                        ? 'bg-amber-100/80 border-amber-500 text-amber-950 shadow-xs'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    <span>Conservative</span>
+                    <span className="text-3xs font-normal opacity-80 mt-0.5">-15% Rev, +5% Opex</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setScenario('base')}
+                    className={`px-2.5 py-2 rounded-xl text-xs font-bold transition flex flex-col items-center cursor-pointer border ${
+                      scenario === 'base'
+                        ? 'bg-emerald-100 border-emerald-600 text-emerald-950 shadow-xs'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    <span>Base Case</span>
+                    <span className="text-3xs font-normal opacity-80 mt-0.5">100% Target Baseline</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setScenario('optimistic')}
+                    className={`px-2.5 py-2 rounded-xl text-xs font-bold transition flex flex-col items-center cursor-pointer border ${
+                      scenario === 'optimistic'
+                        ? 'bg-blue-100 border-blue-500 text-blue-950 shadow-xs'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    <span>Optimistic</span>
+                    <span className="text-3xs font-normal opacity-80 mt-0.5">+10% Rev, -4% Opex</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Business Scaling Controller */}
+              <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Layers className="h-4 w-4 text-emerald-800" />
+                    <span className="text-xs font-bold text-stone-800 uppercase tracking-wider">
+                      Business Scaling Controller
+                    </span>
+                  </div>
+                  {financialPlan?.scaling && (
+                    <span className={`text-3xs font-bold px-2 py-0.5 rounded ${
+                      financialPlan.scaling.suggestedScaleUnits < financialPlan.scaling.standardScaleUnits
+                        ? 'bg-emerald-100 text-emerald-900'
+                        : 'bg-stone-100 text-stone-700'
+                    }`}>
+                      {financialPlan.scaling.suggestedScaleUnits < financialPlan.scaling.standardScaleUnits
+                        ? 'Reduced Scale Active'
+                        : 'Standard Scale'}
+                    </span>
+                  )}
+                </div>
+
+                {financialPlan?.scaling ? (
+                  <div className="space-y-2 text-xs">
+                    <div className="grid grid-cols-2 gap-2 bg-stone-50 p-2.5 rounded-lg border border-stone-200 text-2xs">
+                      <div>
+                        <span className="text-stone-400 block text-3xs font-bold uppercase">Standard Scale</span>
+                        <span className="font-semibold text-stone-800">{financialPlan.scaling.standardScaleLabel}</span>
+                      </div>
+                      <div>
+                        <span className="text-emerald-700 block text-3xs font-bold uppercase">Suggested Scale</span>
+                        <span className="font-bold text-emerald-950">{financialPlan.scaling.suggestedScaleLabel}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="text-2xs text-stone-600">
+                        Estimated Cost: <strong className="text-stone-900 text-xs">{formatINR(financialPlan.scaling.estimatedTotalProjectCost)}</strong>
+                      </div>
+
+                      {/* Discrete scale unit stepper */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!financialPlan.scaling) return;
+                            const current = customScaleUnits ?? financialPlan.scaling.suggestedScaleUnits;
+                            const minU = financialPlan.scaling.minViableUnits;
+                            const step = financialPlan.scaling.stepUnits || 1;
+                            const nextU = Math.max(minU, current - step);
+                            setCustomScaleUnits(nextU);
+                          }}
+                          disabled={(customScaleUnits ?? financialPlan.scaling.suggestedScaleUnits) <= financialPlan.scaling.minViableUnits}
+                          className="p-1.5 rounded-lg border border-stone-300 bg-stone-50 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-stone-700"
+                          title="Decrease scale"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+
+                        <span className="font-bold text-xs text-stone-900 min-w-[70px] text-center">
+                          {(customScaleUnits ?? financialPlan.scaling.suggestedScaleUnits)} {financialPlan.scaling.unitName}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!financialPlan.scaling) return;
+                            const current = customScaleUnits ?? financialPlan.scaling.suggestedScaleUnits;
+                            const maxU = financialPlan.scaling.standardScaleUnits * 2;
+                            const step = financialPlan.scaling.stepUnits || 1;
+                            const nextU = Math.min(maxU, current + step);
+                            setCustomScaleUnits(nextU);
+                          }}
+                          className="p-1.5 rounded-lg border border-stone-300 bg-stone-50 hover:bg-stone-100 cursor-pointer text-stone-700"
+                          title="Increase scale"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-3xs text-stone-400">
+                      Total Project Cost = CapEx + Working Capital Requirement. Strictly integer, non-fractional units.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-xs text-stone-500 py-3">
+                    Fixed capacity enterprise: {selectedEnterprise.defaultScale} ({selectedEnterprise.unit}).
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -242,6 +415,17 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               }`}
             >
               Overview & Viability
+            </button>
+            <button
+              onClick={() => setActiveTab('financials')}
+              className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
+                activeTab === 'financials'
+                  ? 'border-emerald-600 text-emerald-800'
+                  : 'border-transparent text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <Calculator className="h-3.5 w-3.5" />
+              <span>Financial Engine & Feasibility</span>
             </button>
             <button
               onClick={() => setActiveTab('capex')}
@@ -330,6 +514,16 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
         {activeTab === 'discovery' || !selectedEnterprise ? (
           <BudgetDiscoveryEngine
             initialCapital={capitalAvailable ?? undefined}
+            initialState={state}
+            initialDistrict={district}
+            initialVillage={villageOrTown}
+            initialLocationType={locationType}
+            onLocationChange={(newState, newDistrict, newLocType, newVillage) => {
+              setState(newState);
+              setDistrict(newDistrict);
+              setLocationType(newLocType);
+              if (newVillage) setVillageOrTown(newVillage);
+            }}
             onSelectBusinessForDeepDive={(plan) => {
               setCapitalAvailable(plan.availableCapital);
               selectEnterprise(plan.business as any, plan.availableCapital);
@@ -416,11 +610,361 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-stone-500">DSCR Ratio:</span>
-                        <strong className="text-stone-900">{formatRatio(financialPlan.debtServiceCoverageRatio)}x</strong>
+                        <strong className="text-stone-900">
+                          {financialPlan.debtServiceCoverageRatio !== null ? `${formatRatio(financialPlan.debtServiceCoverageRatio)}x` : 'No debt service'}
+                        </strong>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* FINANCIAL ENGINE & FEASIBILITY (PHASE 4) */}
+            {activeTab === 'financials' && (
+              <div className="space-y-6">
+                {/* 1. Core Financial Engine Breakdown Header Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Card 1: Total Project Cost */}
+                  <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
+                    <div className="text-3xs uppercase font-extrabold tracking-wider text-stone-500 mb-1">
+                      Total Project Cost
+                    </div>
+                    <div className="font-heading text-2xl font-black text-stone-900">
+                      {formatINR(financialPlan.totalProjectCost)}
+                    </div>
+                    <div className="mt-2 text-2xs space-y-1 text-stone-600 border-t border-stone-100 pt-2">
+                      <div className="flex justify-between">
+                        <span>Fixed Assets (CapEx):</span>
+                        <strong className="text-stone-900">{formatINR(financialPlan.fixedAssetsCost)}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Working Capital Req.:</span>
+                        <strong className="text-stone-900">{formatINR(financialPlan.workingCapitalRequirement)}</strong>
+                      </div>
+                      <div className="flex justify-between text-stone-500 text-3xs">
+                        <span>Startup / Pre-op Cost:</span>
+                        <span>{formatINR(financialPlan.startupCost)}</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-3xs text-emerald-800 font-semibold bg-emerald-50 px-2 py-1 rounded">
+                      Formula: CapEx + Working Capital
+                    </div>
+                  </div>
+
+                  {/* Card 2: Financing Gap & Debt */}
+                  <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
+                    <div className="text-3xs uppercase font-extrabold tracking-wider text-stone-500 mb-1">
+                      Financing Gap & Debt
+                    </div>
+                    <div className="font-heading text-2xl font-black text-amber-900">
+                      {formatINR(financialPlan.financingGap)}
+                    </div>
+                    <div className="mt-2 text-2xs space-y-1 text-stone-600 border-t border-stone-100 pt-2">
+                      <div className="flex justify-between">
+                        <span>Available Capital:</span>
+                        <strong className="text-emerald-800">{formatINR(financialPlan.availableCapital)}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Promoter Equity %:</span>
+                        <strong className="text-stone-900">{financialPlan.promoterContributionPercent}%</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Bank Term Loan:</span>
+                        <strong className="text-stone-900">{formatINR(financialPlan.bankTermLoanRequired)}</strong>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-3xs text-stone-600 font-medium bg-stone-100 px-2 py-1 rounded">
+                      Gap = Project Cost - Available Capital
+                    </div>
+                  </div>
+
+                  {/* Card 3: Monthly Net Profit & Margin */}
+                  <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
+                    <div className="text-3xs uppercase font-extrabold tracking-wider text-stone-500 mb-1">
+                      Monthly Net Profit ({scenario.toUpperCase()})
+                    </div>
+                    <div className="font-heading text-2xl font-black text-emerald-800">
+                      {formatINR(financialPlan.monthlyNetProfit)}
+                    </div>
+                    <div className="mt-2 text-2xs space-y-1 text-stone-600 border-t border-stone-100 pt-2">
+                      <div className="flex justify-between">
+                        <span>Gross Revenue:</span>
+                        <strong className="text-stone-900">{formatINR(financialPlan.monthlyRevenue)}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Operating Expenses:</span>
+                        <strong className="text-stone-900">{formatINR(financialPlan.monthlyOperatingExpenses)}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Net Profit Margin:</span>
+                        <strong className="text-emerald-800">{financialPlan.netMarginPercent}%</strong>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-3xs text-emerald-800 font-semibold bg-emerald-50 px-2 py-1 rounded">
+                      Annual Net Profit: {formatINR(financialPlan.monthlyNetProfit * 12)}
+                    </div>
+                  </div>
+
+                  {/* Card 4: Returns, Payback & DSCR */}
+                  <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
+                    <div className="text-3xs uppercase font-extrabold tracking-wider text-stone-500 mb-1">
+                      Feasibility & Solvency Ratios
+                    </div>
+                    <div className="font-heading text-2xl font-black text-stone-900">
+                      {financialPlan.returnOnInvestmentPercent}% <span className="text-xs font-normal text-stone-500">ROI</span>
+                    </div>
+                    <div className="mt-2 text-2xs space-y-1 text-stone-600 border-t border-stone-100 pt-2">
+                      <div className="flex justify-between">
+                        <span>Payback Period:</span>
+                        <strong className="text-stone-900">{financialPlan.paybackPeriodYears} Years</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Break-Even Capacity:</span>
+                        <strong className="text-stone-900">
+                          {financialPlan.breakEvenSalesPercent !== null ? `${financialPlan.breakEvenSalesPercent}%` : 'N/A'}
+                        </strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Debt Service (DSCR):</span>
+                        <strong className={`${financialPlan.debtServiceCoverageRatio && financialPlan.debtServiceCoverageRatio >= 1.5 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                          {financialPlan.debtServiceCoverageRatio !== null ? `${financialPlan.debtServiceCoverageRatio}x` : 'No debt service'}
+                        </strong>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-3xs text-stone-600 font-medium bg-stone-100 px-2 py-1 rounded">
+                      Monthly EMI: {formatINR(financialPlan.monthlyEmi)}/mo
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Deterministic Financial Formula & Debt Amortization Panel */}
+                <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-stone-200 pb-3 mb-4">
+                    <div>
+                      <h3 className="font-heading text-base font-bold text-stone-900">
+                        Debt Service & Equated Monthly Installment (EMI)
+                      </h3>
+                      <p className="text-xs text-stone-500">
+                        Standard reducing-balance amortization calculated deterministically without AI heuristics.
+                      </p>
+                    </div>
+                    <span className="text-2xs font-bold uppercase tracking-wider bg-stone-100 text-stone-700 px-2.5 py-1 rounded-md">
+                      Formula: P × r × (1+r)ⁿ / ((1+r)ⁿ - 1)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-2">
+                      <span className="text-stone-500 font-medium block">Principal Borrowing (P):</span>
+                      <span className="font-bold text-base text-stone-900">{formatINR(financialPlan.financingGap)}</span>
+                      <p className="text-3xs text-stone-500">
+                        Calculated as Total Project Cost ({formatINR(financialPlan.totalProjectCost)}) minus Available Promoter Capital ({formatINR(financialPlan.availableCapital)}).
+                      </p>
+                    </div>
+
+                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-2">
+                      <span className="text-stone-500 font-medium block">Annual Interest & Tenure (r, n):</span>
+                      <span className="font-bold text-base text-stone-900">
+                        {scenario === 'conservative' ? '10.5%' : scenario === 'optimistic' ? '8.5%' : '9.5%'} p.a. • 60 Months
+                      </span>
+                      <p className="text-3xs text-stone-500">
+                        5-year repayment tenure with reducing balance interest based on active risk scenario.
+                      </p>
+                    </div>
+
+                    <div className="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 space-y-2">
+                      <span className="text-emerald-900 font-medium block">Equated Monthly Installment (EMI):</span>
+                      <span className="font-bold text-xl text-emerald-950">{formatINR(financialPlan.monthlyEmi)} / mo</span>
+                      <p className="text-3xs text-emerald-800">
+                        Debt Service Coverage Ratio (DSCR): <strong>{financialPlan.debtServiceCoverageRatio !== null ? `${financialPlan.debtServiceCoverageRatio}x` : 'No debt service'}</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Multi-Scenario Risk Assessment: Conservative vs Base vs Optimistic */}
+                {financialPlan.scenarios && (
+                  <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-stone-200 pb-3 mb-4">
+                      <div>
+                        <h3 className="font-heading text-base font-bold text-stone-900">
+                          Scenario Stress-Testing: Conservative vs Base vs Optimistic
+                        </h3>
+                        <p className="text-xs text-stone-500">
+                          Sensitivity analysis modeling revenue contractions, cost inflation, and interest shifts.
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className={`px-2 py-0.5 rounded text-3xs font-bold ${scenario === 'conservative' ? 'bg-amber-100 text-amber-900 ring-2 ring-amber-500' : 'bg-stone-100 text-stone-600'}`}>
+                          Conservative
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-3xs font-bold ${scenario === 'base' ? 'bg-emerald-100 text-emerald-900 ring-2 ring-emerald-600' : 'bg-stone-100 text-stone-600'}`}>
+                          Base Case
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-3xs font-bold ${scenario === 'optimistic' ? 'bg-blue-100 text-blue-900 ring-2 ring-blue-600' : 'bg-stone-100 text-stone-600'}`}>
+                          Optimistic
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-stone-200 text-stone-500 font-bold">
+                            <th className="py-2.5 pr-4">Metric</th>
+                            <th className="py-2.5 px-3 bg-amber-50/50 text-amber-950">Conservative (-15% Rev, +5% Opex)</th>
+                            <th className="py-2.5 px-3 bg-emerald-50/50 text-emerald-950 font-black">Base Case (100% Target)</th>
+                            <th className="py-2.5 px-3 bg-blue-50/50 text-blue-950">Optimistic (+10% Rev, -4% Opex)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-stone-100">
+                          <tr>
+                            <td className="py-2.5 pr-4 font-medium text-stone-700">Monthly Gross Revenue</td>
+                            <td className="py-2.5 px-3 bg-amber-50/30 font-semibold">{formatINR(financialPlan.scenarios.conservative.monthlyRevenue)}</td>
+                            <td className="py-2.5 px-3 bg-emerald-50/30 font-bold">{formatINR(financialPlan.scenarios.base.monthlyRevenue)}</td>
+                            <td className="py-2.5 px-3 bg-blue-50/30 font-semibold">{formatINR(financialPlan.scenarios.optimistic.monthlyRevenue)}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-4 font-medium text-stone-700">Monthly Operating Expenses (OPEX)</td>
+                            <td className="py-2.5 px-3 bg-amber-50/30">{formatINR(financialPlan.scenarios.conservative.monthlyOpex)}</td>
+                            <td className="py-2.5 px-3 bg-emerald-50/30 font-semibold">{formatINR(financialPlan.scenarios.base.monthlyOpex)}</td>
+                            <td className="py-2.5 px-3 bg-blue-50/30">{formatINR(financialPlan.scenarios.optimistic.monthlyOpex)}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-4 font-bold text-stone-900">Monthly Net Profit</td>
+                            <td className="py-2.5 px-3 bg-amber-50/30 font-bold text-amber-900">{formatINR(financialPlan.scenarios.conservative.monthlyNetProfit)}</td>
+                            <td className="py-2.5 px-3 bg-emerald-50/30 font-black text-emerald-900">{formatINR(financialPlan.scenarios.base.monthlyNetProfit)}</td>
+                            <td className="py-2.5 px-3 bg-blue-50/30 font-bold text-blue-900">{formatINR(financialPlan.scenarios.optimistic.monthlyNetProfit)}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-4 font-medium text-stone-700">Net Profit Margin %</td>
+                            <td className="py-2.5 px-3 bg-amber-50/30">{financialPlan.scenarios.conservative.netMarginPercent}%</td>
+                            <td className="py-2.5 px-3 bg-emerald-50/30 font-bold">{financialPlan.scenarios.base.netMarginPercent}%</td>
+                            <td className="py-2.5 px-3 bg-blue-50/30">{financialPlan.scenarios.optimistic.netMarginPercent}%</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-4 font-medium text-stone-700">Return on Investment (ROI p.a.)</td>
+                            <td className="py-2.5 px-3 bg-amber-50/30">{financialPlan.scenarios.conservative.roiPercent}%</td>
+                            <td className="py-2.5 px-3 bg-emerald-50/30 font-bold">{financialPlan.scenarios.base.roiPercent}%</td>
+                            <td className="py-2.5 px-3 bg-blue-50/30">{financialPlan.scenarios.optimistic.roiPercent}%</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-4 font-medium text-stone-700">Payback Period</td>
+                            <td className="py-2.5 px-3 bg-amber-50/30">{financialPlan.scenarios.conservative.paybackPeriodYears} Years</td>
+                            <td className="py-2.5 px-3 bg-emerald-50/30 font-bold">{financialPlan.scenarios.base.paybackPeriodYears} Years</td>
+                            <td className="py-2.5 px-3 bg-blue-50/30">{financialPlan.scenarios.optimistic.paybackPeriodYears} Years</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-4 font-medium text-stone-700">Break-Even Utilization %</td>
+                            <td className="py-2.5 px-3 bg-amber-50/30">{financialPlan.scenarios.conservative.breakEvenSalesPercent !== null ? `${financialPlan.scenarios.conservative.breakEvenSalesPercent}%` : 'N/A'}</td>
+                            <td className="py-2.5 px-3 bg-emerald-50/30 font-bold">{financialPlan.scenarios.base.breakEvenSalesPercent !== null ? `${financialPlan.scenarios.base.breakEvenSalesPercent}%` : 'N/A'}</td>
+                            <td className="py-2.5 px-3 bg-blue-50/30">{financialPlan.scenarios.optimistic.breakEvenSalesPercent !== null ? `${financialPlan.scenarios.optimistic.breakEvenSalesPercent}%` : 'N/A'}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-4 font-medium text-stone-700">Debt Service Coverage (DSCR)</td>
+                            <td className="py-2.5 px-3 bg-amber-50/30 font-semibold">{financialPlan.scenarios.conservative.debtServiceCoverageRatio ? `${financialPlan.scenarios.conservative.debtServiceCoverageRatio}x` : 'N/A'}</td>
+                            <td className="py-2.5 px-3 bg-emerald-50/30 font-bold">{financialPlan.scenarios.base.debtServiceCoverageRatio ? `${financialPlan.scenarios.base.debtServiceCoverageRatio}x` : 'N/A'}</td>
+                            <td className="py-2.5 px-3 bg-blue-50/30 font-semibold">{financialPlan.scenarios.optimistic.debtServiceCoverageRatio ? `${financialPlan.scenarios.optimistic.debtServiceCoverageRatio}x` : 'N/A'}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Cash Flow Projections: Year 1 Monthly & 3-Year Annual */}
+                {financialPlan.cashFlow && (
+                  <div className="grid grid-cols-1 gap-6">
+                    {/* Year 1 Month-by-Month Cash Flow */}
+                    <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-heading text-base font-bold text-stone-900">
+                            Year 1 Month-by-Month Operating Cash Flow
+                          </h3>
+                          <p className="text-xs text-stone-500">
+                            Simulates initial ramp-up, working capital turnover, debt service, and cumulative cash reserves.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-2xs">
+                          <thead>
+                            <tr className="border-b border-stone-200 text-stone-500 font-bold">
+                              <th className="py-2 pr-2">Month</th>
+                              <th className="py-2 px-2">Gross Revenue</th>
+                              <th className="py-2 px-2">OPEX</th>
+                              <th className="py-2 px-2">Operating Cash Flow</th>
+                              <th className="py-2 px-2">Debt Service (EMI)</th>
+                              <th className="py-2 px-2">Net Cash Surplus</th>
+                              <th className="py-2 pl-2">Cumulative Cash</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-stone-100">
+                            {financialPlan.cashFlow.year1Monthly.map((m) => (
+                              <tr key={m.month} className="hover:bg-stone-50">
+                                <td className="py-2 pr-2 font-bold text-stone-800">Month {m.month}</td>
+                                <td className="py-2 px-2">{formatINR(m.grossRevenue)}</td>
+                                <td className="py-2 px-2 text-stone-600">{formatINR(m.operatingExpenses)}</td>
+                                <td className="py-2 px-2 font-medium">{formatINR(m.operatingCashFlow)}</td>
+                                <td className="py-2 px-2 text-stone-500">{formatINR(m.debtServiceEmi)}</td>
+                                <td className={`py-2 px-2 font-bold ${m.netCashSurplus >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                  {formatINR(m.netCashSurplus)}
+                                </td>
+                                <td className="py-2 pl-2 font-bold text-stone-900">{formatINR(m.cumulativeCashBalance)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* 3-Year Annual Cash Flow Projection */}
+                    <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-4">
+                      <div>
+                        <h3 className="font-heading text-base font-bold text-stone-900">
+                          3-Year Strategic Cash Flow & Capital Accumulation
+                        </h3>
+                        <p className="text-xs text-stone-500">
+                          3-year forward horizon projecting expansion capacity and promoter debt retirement.
+                        </p>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-2xs">
+                          <thead>
+                            <tr className="border-b border-stone-200 text-stone-500 font-bold">
+                              <th className="py-2 pr-2">Horizon</th>
+                              <th className="py-2 px-2">Annual Turnover</th>
+                              <th className="py-2 px-2">Operating Costs</th>
+                              <th className="py-2 px-2">Depreciation</th>
+                              <th className="py-2 px-2">Net Profit</th>
+                              <th className="py-2 px-2">Debt Service</th>
+                              <th className="py-2 px-2">Annual Surplus</th>
+                              <th className="py-2 pl-2">Cumulative Bank Balance</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-stone-100">
+                            {financialPlan.cashFlow.threeYearAnnual.map((y) => (
+                              <tr key={y.year} className="hover:bg-stone-50">
+                                <td className="py-2 pr-2 font-bold text-stone-900">Year {y.year}</td>
+                                <td className="py-2 px-2 font-semibold">{formatINR(y.grossRevenue)}</td>
+                                <td className="py-2 px-2 text-stone-600">{formatINR(y.operatingExpenses)}</td>
+                                <td className="py-2 px-2 text-stone-500">{formatINR(y.depreciation)}</td>
+                                <td className="py-2 px-2 font-bold text-emerald-800">{formatINR(y.netProfit)}</td>
+                                <td className="py-2 px-2 text-stone-500">{formatINR(y.debtService)}</td>
+                                <td className="py-2 px-2 font-bold text-stone-900">{formatINR(y.netSurplus)}</td>
+                                <td className="py-2 pl-2 font-black text-emerald-900">{formatINR(y.cumulativeCashBalance)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -497,45 +1041,17 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
 
             {/* 3. LOCATION ANALYSIS */}
             {activeTab === 'location' && (
-              <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-6">
-                <div className="flex items-center gap-2 text-stone-900 font-heading text-lg font-bold">
-                  <MapPin className="h-5 w-5 text-emerald-700" />
-                  <span>District Resource & Catchment Analysis ({district}, {state})</span>
-                </div>
-
+              <div className="space-y-6">
                 {districtData ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-                    <div className="space-y-4 rounded-xl bg-stone-50 p-4 border border-stone-200">
-                      <div className="font-bold text-stone-900 text-sm">Agricultural & Raw Material Surpluses</div>
-                      <div>Agro-Climatic Zone: <strong>{districtData.agroClimaticZone}</strong></div>
-                      <div>
-                        Primary Agricultural Crops:
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {districtData.keySurplusCrops.map((c, i) => (
-                            <span key={i} className="bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded text-2xs font-semibold">
-                              {c}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        Prominent APMC / Trade Mandis:
-                        <div className="text-stone-700 mt-1">{districtData.prominentLocalMarkets.join(', ')}</div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4 rounded-xl bg-stone-50 p-4 border border-stone-200">
-                      <div className="font-bold text-stone-900 text-sm">Industrial & Institutional Infrastructure</div>
-                      <div>Power Reliability: <strong>{districtData.powerReliabilityScore} / 10 Grid Score</strong></div>
-                      <div>Water Availability: <strong>{districtData.waterAvailabilityScore} / 10 Abundance Score</strong></div>
-                      <div>Lead Bank Office: <strong>{districtData.leadBankName}</strong></div>
-                      <div>DIC Office: <strong>{districtData.districtIndustryCenterAddress}</strong></div>
-                    </div>
-                  </div>
+                  <LocationGisCatchmentMap
+                    districtData={districtData}
+                    villageOrTown={villageOrTown}
+                    locationType={locationType}
+                  />
                 ) : (
-                  <p className="text-xs text-stone-500">
+                  <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs text-xs text-stone-500">
                     Location intelligence active for {district}, {state}.
-                  </p>
+                  </div>
                 )}
               </div>
             )}
@@ -643,7 +1159,11 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
                     <div>
                       <div className="font-bold text-emerald-950">Bankability & DSCR Viability</div>
                       <div className="text-stone-700 mt-0.5">
-                        Calculated DSCR is <strong>{formatRatio(financialPlan.debtServiceCoverageRatio)}x</strong>, comfortably exceeding the mandatory banking threshold of 1.50x.
+                        {financialPlan.debtServiceCoverageRatio !== null ? (
+                          <>Calculated DSCR is <strong>{formatRatio(financialPlan.debtServiceCoverageRatio)}x</strong>, meeting banking viability benchmarks.</>
+                        ) : (
+                          <>No external debt service required; project is fully equity funded.</>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -724,8 +1244,8 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
 
                   <div className="font-bold text-stone-900 text-sm pt-2">CHAPTER 2: PROJECTED FINANCIAL RATIOS</div>
                   <p>
-                    • Debt Service Coverage Ratio (DSCR): {financialPlan.debtServiceCoverageRatio.toFixed(2)}x
-                    <br />• Break-Even Point (Capacity Utilization): {financialPlan.breakEvenSalesPercent.toFixed(1)}%
+                    • Debt Service Coverage Ratio (DSCR): {financialPlan.debtServiceCoverageRatio !== null ? `${financialPlan.debtServiceCoverageRatio.toFixed(2)}x` : 'No debt service'}
+                    <br />• Break-Even Point (Capacity Utilization): {financialPlan.breakEvenSalesPercent !== null ? `${financialPlan.breakEvenSalesPercent.toFixed(1)}%` : 'N/A'}
                     <br />• Annual Gross Receipts (Year 1): ₹{financialPlan.annualTurnoverYear1.toLocaleString('en-IN')}
                     <br />• Net Profit After Tax (PAT Year 1): ₹{financialPlan.profitAfterTax.toLocaleString('en-IN')}
                     <br />• Capital Payback Period: {financialPlan.paybackPeriodYears} Years

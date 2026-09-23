@@ -1,30 +1,17 @@
 import { entityRepository } from '../models/schema.ts';
 import { DistrictIntelligence } from '../../src/types/location.ts';
-import { POPULAR_INDIAN_STATES } from '../../src/data/locationBenchmarksData.ts';
+import { POPULAR_INDIAN_STATES, STATE_DISTRICTS_MAP } from '../../src/data/locationBenchmarksData.ts';
+import { generateDistrictFallback } from '../../src/utils/locationIntelligenceEngine.ts';
 
 export class LocationGisService {
-  public getDistrictData(state: string, district: string): DistrictIntelligence | null {
+  public getDistrictData(state: string, district: string): DistrictIntelligence {
     const data = entityRepository.getDistrictIntelligence(state, district);
     if (data) {
       return data;
     }
 
-    // Extensible fallback synthesizer for any Indian district query
-    return {
-      state,
-      district,
-      agroClimaticZone: 'Regional Agricultural & Industrial Catchment',
-      keySurplusCrops: ['Regional Grains', 'Cash Crops', 'Seasonal Vegetables'],
-      industrialClusters: ['District MSME Cluster', 'Agri-trade Market Yard'],
-      powerReliabilityScore: 7.5,
-      waterAvailabilityScore: 7.5,
-      nearestHighwayKm: 6,
-      nearestRailwayStationKm: 10,
-      prominentLocalMarkets: [`${district} Main APMC Mandi`, `${district} Industrial Area`],
-      recommendedRuralEnterprises: ['ent_spices_processing', 'ent_oil_expeller', 'ent_paper_packaging'],
-      districtIndustryCenterAddress: `District Industries Center, Collectorate Complex, ${district}, ${state}`,
-      leadBankName: 'State Lead Bank Office'
-    };
+    // Return truthful fallback marked explicitly as 'State-level estimate' with official sources
+    return generateDistrictFallback(state, district);
   }
 
   public getSupportedStates(): string[] {
@@ -32,12 +19,22 @@ export class LocationGisService {
   }
 
   public getDistrictsByState(state: string): string[] {
+    // 1. Check known district map
+    if (STATE_DISTRICTS_MAP[state]) {
+      return STATE_DISTRICTS_MAP[state];
+    }
+
+    // 2. Check benchmarks
     const all = entityRepository.getAllDistrictBenchmarks();
     const stateMatched = all.filter((d) => d.state.toLowerCase() === state.toLowerCase()).map((d) => d.district);
     if (stateMatched.length > 0) return stateMatched;
 
-    // Default sample districts for state if benchmark records are being expanded
+    // 3. Fallback sample districts
     return [`${state} Central`, `${state} North`, `${state} South`];
+  }
+
+  public getAllDistrictsMap(): Record<string, string[]> {
+    return STATE_DISTRICTS_MAP;
   }
 }
 

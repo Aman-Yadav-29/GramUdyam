@@ -1,13 +1,21 @@
 import { entityRepository } from '../models/schema.ts';
 import { BusinessDiscoveryQuery, DiscoveryResult, DiscoverySortOption } from '../../src/types/business.ts';
+import { GisLocationQuery } from '../../src/types/location.ts';
 import { formatINRLakhs } from '../../src/utils/formatters.ts';
 import { discoverBusinessesByBudget, DiscoveryConfig } from './discoveryEngine.ts';
 
 export class BusinessService {
   /**
-   * Budget-First Discovery Engine
+   * Budget-First Discovery Engine with Location Intelligence
    */
-  public discoverByBudget(availableCapital: number, options?: { sortBy?: DiscoverySortOption; config?: Partial<DiscoveryConfig> }) {
+  public discoverByBudget(
+    availableCapital: number, 
+    options?: { 
+      sortBy?: DiscoverySortOption; 
+      config?: Partial<DiscoveryConfig>;
+      location?: GisLocationQuery;
+    }
+  ) {
     return discoverBusinessesByBudget(availableCapital, options);
   }
 

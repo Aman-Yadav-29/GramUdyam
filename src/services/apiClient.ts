@@ -66,10 +66,28 @@ class ApiClient {
   }
 
   // Business Discovery
-  public async discoverByBudget(availableCapital: number, sortBy: DiscoverySortOption = 'lowest_investment'): Promise<BudgetDiscoveryResult> {
+  public async discoverByBudget(
+    availableCapital: number, 
+    sortBy: DiscoverySortOption = 'lowest_investment',
+    location?: {
+      state?: string;
+      district?: string;
+      subDistrictOrBlock?: string;
+      villageOrTown?: string;
+      locationType?: 'rural' | 'semi_urban' | 'urban';
+    }
+  ): Promise<BudgetDiscoveryResult> {
     return this.request<BudgetDiscoveryResult>('/api/business/discover-by-budget', {
       method: 'POST',
-      body: JSON.stringify({ availableCapital, sortBy })
+      body: JSON.stringify({
+        availableCapital,
+        sortBy,
+        state: location?.state,
+        district: location?.district,
+        subDistrictOrBlock: location?.subDistrictOrBlock,
+        villageOrTown: location?.villageOrTown,
+        locationType: location?.locationType
+      })
     });
   }
 

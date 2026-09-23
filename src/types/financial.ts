@@ -33,9 +33,11 @@ export interface ScenarioProjection {
   annualNetCashFlow: number;
   roiPercent: number;
   paybackPeriodYears: number;
-  breakEvenSalesPercent: number;
-  breakEvenMonthlyRevenue: number;
+  breakEvenSalesPercent: number | null;
+  breakEvenMonthlyRevenue: number | null;
+  breakEvenStatus: string;
   debtServiceCoverageRatio: number | null;
+  dscrStatus: string;
   monthlyEmi: number;
 }
 
@@ -93,6 +95,10 @@ export interface ScalingRecommendation {
   // Affordability metrics at suggested scale
   availableCapital: number;
   financingGap: number; // estimatedTotalProjectCost - availableCapital
+  requiresExternalFinancing: boolean;
+  requiredFinancing: number;
+  estimatedMonthlyEmi: number;
+  dscr: number | null;
   affordabilityTier: AffordabilityTier;
   affordabilityReason: string;
   
@@ -104,16 +110,17 @@ export interface ScalingRecommendation {
 
 export interface FinancialPlan {
   // Core project costs
-  startupCost: number; // Pre-operative & launch expenses
-  fixedAssetsCost: number; // Total CapEx
+  startupCost: number; // Pre-operative & launch expenses (part of CapEx)
+  fixedAssetsCost: number; // Total CapEx (equipment + civil/infrastructure + pre-operative)
   workingCapitalRequirement: number; // Total working capital
   totalProjectCost: number; // CapEx + Working Capital Requirement
   
   // Financing & Gap
   availableCapital: number;
-  promoterContribution: number; // Equity margin
+  promoterContribution: number; // User own equity
   promoterContributionPercent: number;
   financingGap: number; // Total Project Cost - Available Capital
+  requiresExternalFinancing: boolean;
   eligibleSubsidyEstimate: number; // From PMEGP, PMFME, etc.
   bankTermLoanRequired: number;
   workingCapitalBankLoan: number;
@@ -139,9 +146,11 @@ export interface FinancialPlan {
   profitAfterTax: number;
   
   // Solvency & Feasibility Ratios
-  debtServiceCoverageRatio: number; // DSCR
-  breakEvenSalesPercent: number; // % capacity utilization
-  breakEvenMonthlyRevenue: number;
+  debtServiceCoverageRatio: number | null; // DSCR (null if no debt service)
+  dscrStatus: string;
+  breakEvenSalesPercent: number | null; // % capacity utilization (null if CM <= 0)
+  breakEvenMonthlyRevenue: number | null;
+  breakEvenStatus: string;
   paybackPeriodYears: number;
   returnOnInvestmentPercent: number;
   

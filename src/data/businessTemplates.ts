@@ -692,5 +692,62 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
     typicalRiskLevel: 'low',
     keyRawMaterials: ['Fly Ash (from Thermal Plants)', 'Portland Cement (53 Grade)', 'Stone Quarry Dust / Sand', 'Gypsum / Lime'],
     eligibleSchemes: ['PMEGP', 'STANDUP_INDIA', 'MUDRA']
+  },
+
+  // 13. Smallholder Commercial Dairy Farm (Murrah Buffaloes / HF Crossbred Cows) (Project Cost ~₹8,00,000)
+  {
+    id: 'ent_dairy_cattle',
+    name: 'Smallholder Commercial Dairy Farm (Murrah Buffaloes / HF Cows)',
+    category: 'dairy_livestock',
+    tagline: 'High-yield commercial dairy unit with hygienic milking, chilled storage, and dung biogas',
+    description: 'Commercial micro-dairy farm with high-lactation Murrah buffaloes or HF crossbred cows producing fresh whole milk for local co-operatives, sweet artisans, and residential consumers.',
+    minimumViableScale: '5 animals',
+    defaultScale: '10 animals',
+    unit: 'animals',
+    fixedAssets: {
+      equipmentCost: 550000,
+      infrastructureCost: 145000,
+      preOperativeCost: 25000,
+      totalFixedAssets: 720000
+    },
+    equipment: [
+      { name: 'High-Yield Milch Animals (Murrah Buffaloes / HF Cows)', spec: '10 lactating animals with certified veterinary health and vaccination records', approxCost: 500000 },
+      { name: 'Dual-Bucket Portable Milking Machine', spec: 'Oil-lubricated vacuum pump with stainless steel 25L food-grade cans', approxCost: 35000 },
+      { name: 'Insulated Milk Cans & Quality Testing Bench', spec: '4 x 40L SS-304 insulated cans + ultrasonic milk fat analyzer', approxCost: 15000 }
+    ],
+    infrastructure: {
+      spaceRequiredSqFt: 1200,
+      shedType: 'Well-ventilated pucca shed with non-slip grooved concrete floor, mangers & slurry pit',
+      powerHpRequired: 2,
+      waterRequirement: 'Borewell water supply (approx 1,000L/day for drinking, cooling mist & washing)'
+    },
+    workingCapital: {
+      cycleMonths: 2,
+      rawMaterialReserve: 55000,
+      cashContingency: 25000,
+      totalWorkingCapital: 80000
+    },
+    operatingCosts: {
+      rawMaterialsMonthly: 38000, // Concentrated cattle feed, dry straw, silage & mineral mix
+      laborAndWagesMonthly: 12000,
+      utilitiesAndPowerMonthly: 2500,
+      repairAndMaintenanceMonthly: 1500,
+      freightAndLogisticsMonthly: 2000,
+      totalMonthlyOpex: 56000
+    },
+    expectedOutputMonthly: 3600, // Liters of fresh raw milk
+    priceAssumptions: {
+      unitSellingPrice: 52, // ₹52 per liter blended co-op & direct retail price
+      unitRawMaterialCost: 10.5
+    },
+    revenueAssumptions: {
+      expectedMonthlyRevenue: 75000, // Milk revenue + bio-slurry / dung manure compost sales
+      capacityUtilizationPercent: 85,
+      assumedMarginBasis: 'Direct co-operative milk society delivery & local retail milk rounds'
+    },
+    gestationPeriodMonths: 1,
+    typicalRiskLevel: 'moderate',
+    keyRawMaterials: ['Milch Cows / Buffaloes', 'Cattle Feed Pellets', 'Dry Wheat Straw', 'Green Silage / Napier Grass', 'Veterinary Medicines'],
+    eligibleSchemes: ['PMEGP', 'KCC Animal Husbandry', 'National Livestock Mission (NLM)', 'MUDRA']
   }
 ];

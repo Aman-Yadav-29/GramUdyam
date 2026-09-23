@@ -324,7 +324,7 @@ export const InteractiveDiscoveryPreview: React.FC<InteractiveDiscoveryPreviewPr
                     <div>
                       <span className="text-stone-500">DSCR Ratio:</span>
                       <div className="font-heading font-bold text-stone-900 text-sm">
-                        {formatRatio(financialPlan.debtServiceCoverageRatio)}x
+                        {financialPlan.debtServiceCoverageRatio !== null ? `${formatRatio(financialPlan.debtServiceCoverageRatio)}x` : 'No debt'}
                       </div>
                       <span className="text-2xs text-emerald-700 font-medium">Bank Target: &gt;1.50</span>
                     </div>
@@ -332,7 +332,7 @@ export const InteractiveDiscoveryPreview: React.FC<InteractiveDiscoveryPreviewPr
                     <div>
                       <span className="text-stone-500">Break-Even Sales:</span>
                       <div className="font-heading font-bold text-stone-900 text-sm">
-                        {formatPercent(financialPlan.breakEvenSalesPercent)}
+                        {financialPlan.breakEvenSalesPercent !== null ? formatPercent(financialPlan.breakEvenSalesPercent) : 'N/A'}
                       </div>
                       <span className="text-2xs text-stone-500">Capacity threshold</span>
                     </div>

@@ -16,50 +16,40 @@ import {
   calculateScaledCostBreakdown, 
   SCALE_DEFINITIONS 
 } from './scalingEngine.ts';
+import {
+  calculateTotalProjectCost,
+  calculateFinancingGap,
+  calculateEmi,
+  calculateBreakEven,
+  calculateDscr,
+  CONSERVATIVE_REVENUE_FACTOR,
+  CONSERVATIVE_OPEX_FACTOR,
+  CONSERVATIVE_INTEREST_RATE_DELTA,
+  BASE_REVENUE_FACTOR,
+  BASE_OPEX_FACTOR,
+  BASE_INTEREST_RATE_DELTA,
+  OPTIMISTIC_REVENUE_FACTOR,
+  OPTIMISTIC_OPEX_FACTOR,
+  OPTIMISTIC_INTEREST_RATE_DELTA
+} from './financialFormulas.ts';
 
-/**
- * Calculates monthly EMI using the standard reducing-balance formula:
- * EMI = [P x r x (1+r)^n] / [(1+r)^n - 1]
- */
-export function calculateEmi(principal: number, annualInterestRate: number, tenureMonths: number): LoanEmiCalculation {
-  if (principal <= 0 || tenureMonths <= 0) {
-    return {
-      loanAmount: principal,
-      annualInterestRate,
-      tenureMonths,
-      monthlyEmi: 0,
-      totalInterestPayable: 0,
-      totalPayment: 0
-    };
-  }
-
-  const monthlyRate = annualInterestRate / (12 * 100);
-  if (monthlyRate === 0) {
-    const monthlyEmi = Math.round(principal / tenureMonths);
-    return {
-      loanAmount: principal,
-      annualInterestRate: 0,
-      tenureMonths,
-      monthlyEmi,
-      totalInterestPayable: 0,
-      totalPayment: principal
-    };
-  }
-
-  const factor = Math.pow(1 + monthlyRate, tenureMonths);
-  const monthlyEmi = Math.round((principal * monthlyRate * factor) / (factor - 1));
-  const totalPayment = monthlyEmi * tenureMonths;
-  const totalInterestPayable = Math.max(0, totalPayment - principal);
-
-  return {
-    loanAmount: principal,
-    annualInterestRate,
-    tenureMonths,
-    monthlyEmi,
-    totalInterestPayable,
-    totalPayment
-  };
-}
+// Re-export authoritative financial formulas for backwards compatibility
+export {
+  calculateTotalProjectCost,
+  calculateFinancingGap,
+  calculateEmi,
+  calculateBreakEven,
+  calculateDscr,
+  CONSERVATIVE_REVENUE_FACTOR,
+  CONSERVATIVE_OPEX_FACTOR,
+  CONSERVATIVE_INTEREST_RATE_DELTA,
+  BASE_REVENUE_FACTOR,
+  BASE_OPEX_FACTOR,
+  BASE_INTEREST_RATE_DELTA,
+  OPTIMISTIC_REVENUE_FACTOR,
+  OPTIMISTIC_OPEX_FACTOR,
+  OPTIMISTIC_INTEREST_RATE_DELTA
+};
 
 /**
  * Derives dynamic CAPEX asset allocation based on total recommended capital
@@ -115,24 +105,26 @@ export interface ScenarioMultipliers {
 
 export const SCENARIO_PRESETS: Record<FinancialScenarioType, ScenarioMultipliers> = {
   conservative: {
-    revenueMultiplier: 0.85, // -15% gross receipts
-    opexMultiplier: 1.05,    // +5% cost inflation
-    interestRateDelta: 0.01  // +100 bps loan rate
+    revenueMultiplier: CONSERVATIVE_REVENUE_FACTOR, // -15% gross receipts under adverse market conditions
+    opexMultiplier: CONSERVATIVE_OPEX_FACTOR,       // +5% operating cost inflation
+    interestRateDelta: CONSERVATIVE_INTEREST_RATE_DELTA // +100 bps bank risk spread
   },
   base: {
-    revenueMultiplier: 1.00, // 100% baseline
-    opexMultiplier: 1.00,    // 100% baseline
-    interestRateDelta: 0.00  // baseline
+    revenueMultiplier: BASE_REVENUE_FACTOR,         // 100% baseline operational throughput
+    opexMultiplier: BASE_OPEX_FACTOR,               // 100% baseline operating expense
+    interestRateDelta: BASE_INTEREST_RATE_DELTA     // Baseline priority sector lending rate (9.5% p.a.)
   },
   optimistic: {
-    revenueMultiplier: 1.10, // +10% receipts
-    opexMultiplier: 0.96,    // -4% bulk procurement discount
-    interestRateDelta: -0.01 // -100 bps rate discount
+    revenueMultiplier: OPTIMISTIC_REVENUE_FACTOR,   // +10% peak off-take / direct retail premium
+    opexMultiplier: OPTIMISTIC_OPEX_FACTOR,         // -4% bulk raw material sourcing efficiency
+    interestRateDelta: OPTIMISTIC_INTEREST_RATE_DELTA // -100 bps concessional interest subvention
   }
 };
 
 /**
  * Computes deterministic scenario projections
+ * Follows the rigorous chain:
+ * scenario revenue -> scenario OPEX -> scenario profit -> scenario cash flow -> scenario DSCR & Break-Even
  */
 export function computeScenarioProjection(
   scenario: FinancialScenarioType,
@@ -155,9 +147,12 @@ export function computeScenarioProjection(
     ? Math.round((financingGap * annualRate) / 12)
     : 0;
 
+  // EMI is calculated strictly on the actual financing/loan amount (financingGap), NOT the entire project cost
   const emiCalc = calculateEmi(financingGap, annualRate * 100, tenureMonths);
   const monthlyEmi = emiCalc.monthlyEmi;
 
+  // Accounting Net Profit = Gross Revenue - OPEX - Depreciation - Interest Expense
+  // Note: We subtract Interest Expense (borrowing cost), NOT the full EMI (principal repayment is debt amortization, not an expense)
   const monthlyNetProfit = Math.round(monthlyRevenue - monthlyOpex - depreciationMonthly - monthlyInterest);
   const netMarginPercent = monthlyRevenue > 0
     ? Number(((monthlyNetProfit / monthlyRevenue) * 100).toFixed(1))
@@ -176,33 +171,15 @@ export function computeScenarioProjection(
     ? Number((projectCost / annualNetCashFlow).toFixed(1))
     : 9.9;
 
-  // Break-even calculations
+  // Break-even calculation using authoritative contribution margin approach
   const fixedPortion = Math.round(monthlyOpex * (1 - rawMaterialPortion)) + depreciationMonthly + monthlyInterest;
   const variablePortion = Math.round(monthlyOpex * rawMaterialPortion);
-  const contributionMargin = monthlyRevenue - variablePortion;
+  const beAnalysis = calculateBreakEven(monthlyRevenue, fixedPortion, variablePortion, capacityUtilization);
 
-  let breakEvenSalesPercent: number;
-  let breakEvenMonthlyRevenue: number;
-
-  if (contributionMargin <= 0) {
-    breakEvenSalesPercent = 100;
-    breakEvenMonthlyRevenue = monthlyRevenue;
-  } else {
-    const breakEvenCapacity = (fixedPortion / contributionMargin) * capacityUtilization;
-    breakEvenSalesPercent = Number(Math.max(0, breakEvenCapacity).toFixed(1));
-    const marginRatio = contributionMargin / monthlyRevenue;
-    breakEvenMonthlyRevenue = marginRatio > 0 ? Math.round(fixedPortion / marginRatio) : monthlyRevenue;
-  }
-
-  // DSCR calculation
-  let debtServiceCoverageRatio: number | null = null;
-  if (financingGap > 0) {
-    const annualDebtService = monthlyEmi * 12;
-    const annualCashAvailable = (monthlyNetProfit + depreciationMonthly + monthlyInterest) * 12;
-    debtServiceCoverageRatio = annualDebtService > 0
-      ? Number((annualCashAvailable / annualDebtService).toFixed(2))
-      : null;
-  }
+  // DSCR calculation using authoritative formula
+  const annualDebtService = monthlyEmi * 12;
+  const annualCashAvailable = (monthlyNetProfit + depreciationMonthly + monthlyInterest) * 12;
+  const dscrAnalysis = calculateDscr(annualCashAvailable, annualDebtService);
 
   return {
     scenario,
@@ -216,9 +193,11 @@ export function computeScenarioProjection(
     annualNetCashFlow,
     roiPercent,
     paybackPeriodYears,
-    breakEvenSalesPercent,
-    breakEvenMonthlyRevenue,
-    debtServiceCoverageRatio,
+    breakEvenSalesPercent: beAnalysis.breakEvenSalesPercent,
+    breakEvenMonthlyRevenue: beAnalysis.breakEvenMonthlyRevenue,
+    breakEvenStatus: beAnalysis.breakEvenStatus,
+    debtServiceCoverageRatio: dscrAnalysis.dscr,
+    dscrStatus: dscrAnalysis.dscrStatus,
     monthlyEmi
   };
 }
@@ -333,24 +312,24 @@ export function calculateDeterministicFinancialPlan(params: {
         scalingRatio: 1,
         fixedAssets: business.fixedAssets,
         workingCapital: business.workingCapital,
-        totalProjectCost: business.fixedAssets.totalFixedAssets + business.workingCapital.totalWorkingCapital,
+        totalProjectCost: calculateTotalProjectCost(business.fixedAssets.totalFixedAssets, business.workingCapital.totalWorkingCapital),
         monthlyRevenue: business.revenueAssumptions.expectedMonthlyRevenue,
         monthlyOpex: business.operatingCosts.totalMonthlyOpex,
         monthlyNetProfit: business.revenueAssumptions.expectedMonthlyRevenue - business.operatingCosts.totalMonthlyOpex
       };
 
-  // 2. Cost Aggregations (MANDATORY RULE: Total Project Cost = CapEx + Working Capital Requirement)
+  // 2. Cost Aggregations (MANDATORY AUTHORITATIVE RULE: Total Project Cost = CapEx + Working Capital Requirement)
   const startupCost = scaledBreakdown.fixedAssets.preOperativeCost;
   const fixedAssetsCost = scaledBreakdown.fixedAssets.totalFixedAssets;
   const workingCapitalRequirement = scaledBreakdown.workingCapital.totalWorkingCapital;
-  const totalProjectCost = fixedAssetsCost + workingCapitalRequirement;
+  const totalProjectCost = calculateTotalProjectCost(fixedAssetsCost, workingCapitalRequirement);
 
   // 3. Financing Gap Formula: Total Project Cost - Available Capital
-  const financingGap = Math.max(0, totalProjectCost - availableCapital);
-  const promoterContribution = Math.min(availableCapital, totalProjectCost);
-  const promoterContributionPercent = totalProjectCost > 0
-    ? Math.round((promoterContribution / totalProjectCost) * 100)
-    : 0;
+  const gapAnalysis = calculateFinancingGap(totalProjectCost, availableCapital);
+  const financingGap = gapAnalysis.financingGap;
+  const promoterContribution = gapAnalysis.promoterContribution;
+  const promoterContributionPercent = gapAnalysis.promoterContributionPercent;
+  const requiresExternalFinancing = gapAnalysis.requiresExternalFinancing;
 
   // 4. Indicative Subsidy (PMEGP / PMFME benchmarks)
   let eligibleSubsidyEstimate = 0;
@@ -362,14 +341,8 @@ export function calculateDeterministicFinancialPlan(params: {
     eligibleSubsidyEstimate = Math.min(750000, Math.round(totalProjectCost * 0.15));
   }
 
-  // 5. Debt Service & EMI
+  // 5. Debt Service & Base Loan: Calculated strictly on the actual financing gap
   const bankTermLoanRequired = financingGap;
-  const emiCalc = calculateEmi(bankTermLoanRequired, annualInterestRate * 100, loanTenureMonths);
-  const monthlyEmi = emiCalc.monthlyEmi;
-  const monthlyInterest = bankTermLoanRequired > 0
-    ? Math.round((bankTermLoanRequired * annualInterestRate) / 12)
-    : 0;
-  const interestExpenseYear1 = monthlyInterest * 12;
 
   // 6. Monthly Operational Figures
   const baseMonthlyRevenue = scaledBreakdown.monthlyRevenue;
@@ -437,11 +410,18 @@ export function calculateDeterministicFinancialPlan(params: {
 
   // Active projection according to selected scenario
   const activeProjection = scenarios[scenario];
+  const activeMultipliers = SCENARIO_PRESETS[scenario];
+  const activeAnnualRate = Math.max(0.05, annualInterestRate + activeMultipliers.interestRateDelta);
 
   const monthlyRevenue = activeProjection.monthlyRevenue;
   const monthlyOperatingExpenses = activeProjection.monthlyOpex;
   const monthlyNetProfit = activeProjection.monthlyNetProfit;
   const netMarginPercent = activeProjection.netMarginPercent;
+  const monthlyEmi = activeProjection.monthlyEmi;
+  const monthlyInterest = financingGap > 0
+    ? Math.round((financingGap * activeAnnualRate) / 12)
+    : 0;
+  const interestExpenseYear1 = monthlyInterest * 12;
 
   const annualTurnoverYear1 = activeProjection.annualRevenue;
   const annualOperatingCostYear1 = activeProjection.annualOpex;
@@ -450,9 +430,11 @@ export function calculateDeterministicFinancialPlan(params: {
   const taxEstimate = Math.round(profitBeforeTax * 0.22);
   const profitAfterTax = profitBeforeTax - taxEstimate;
 
-  const debtServiceCoverageRatio = activeProjection.debtServiceCoverageRatio ?? 0;
+  const debtServiceCoverageRatio = activeProjection.debtServiceCoverageRatio;
+  const dscrStatus = activeProjection.dscrStatus;
   const breakEvenSalesPercent = activeProjection.breakEvenSalesPercent;
   const breakEvenMonthlyRevenue = activeProjection.breakEvenMonthlyRevenue;
+  const breakEvenStatus = activeProjection.breakEvenStatus;
   const paybackPeriodYears = activeProjection.paybackPeriodYears;
   const returnOnInvestmentPercent = activeProjection.roiPercent;
 
@@ -479,6 +461,7 @@ export function calculateDeterministicFinancialPlan(params: {
     promoterContribution,
     promoterContributionPercent,
     financingGap,
+    requiresExternalFinancing,
     eligibleSubsidyEstimate,
     bankTermLoanRequired,
     workingCapitalBankLoan,
@@ -499,8 +482,10 @@ export function calculateDeterministicFinancialPlan(params: {
     taxEstimate,
     profitAfterTax,
     debtServiceCoverageRatio,
+    dscrStatus,
     breakEvenSalesPercent,
     breakEvenMonthlyRevenue,
+    breakEvenStatus,
     paybackPeriodYears,
     returnOnInvestmentPercent,
     cashFlow,
@@ -523,9 +508,10 @@ export function buildFinancialPlan(params: {
 }): FinancialPlan {
   const totalProjectCost = params.recommendedCapital;
   const availableCapital = params.availableEquity;
-  const financingGap = Math.max(0, totalProjectCost - availableCapital);
-  const promoterContribution = Math.min(availableCapital, totalProjectCost);
-  const promoterPercent = totalProjectCost > 0 ? Math.round((promoterContribution / totalProjectCost) * 100) : 100;
+  const gapAnalysis = calculateFinancingGap(totalProjectCost, availableCapital);
+  const financingGap = gapAnalysis.financingGap;
+  const promoterContribution = gapAnalysis.promoterContribution;
+  const promoterPercent = gapAnalysis.promoterContributionPercent;
 
   const annualTurnoverYear1 = params.expectedAnnualTurnover;
   const annualOperatingCostYear1 = Math.round(annualTurnoverYear1 * (1 - (params.netMarginPercent / 100) - 0.08));
@@ -542,15 +528,14 @@ export function buildFinancialPlan(params: {
   const profitAfterTax = profitBeforeTax - taxEstimate;
 
   const netCashAvailableForDebtService = profitAfterTax + depreciationYear1 + interestExpenseYear1;
-  const dscr = annualDebtService > 0 ? Number((netCashAvailableForDebtService / annualDebtService).toFixed(2)) : 0;
+  const dscrAnalysis = calculateDscr(netCashAvailableForDebtService, annualDebtService);
 
   const fixedCosts = Math.round(annualOperatingCostYear1 * 0.35) + interestExpenseYear1 + depreciationYear1;
   const variableCosts = Math.round(annualOperatingCostYear1 * 0.65);
-  const contributionMargin = annualTurnoverYear1 - variableCosts;
-  const breakEvenSalesPercent = contributionMargin > 0 ? Number(((fixedCosts / contributionMargin) * 100).toFixed(1)) : 48.0;
+  const beAnalysis = calculateBreakEven(Math.round(annualTurnoverYear1 / 12), Math.round(fixedCosts / 12), Math.round(variableCosts / 12));
 
   const annualNetCashInflow = profitAfterTax + depreciationYear1;
-  const paybackPeriodYears = annualNetCashInflow > 0 ? Number((totalProjectCost / annualNetCashInflow).toFixed(1)) : 3.2;
+  const paybackPeriodYears = annualNetCashInflow > 0 ? Number((totalProjectCost / annualNetCashInflow).toFixed(1)) : 9.9;
   const returnOnInvestmentPercent = totalProjectCost > 0 ? Number(((profitAfterTax / totalProjectCost) * 100).toFixed(1)) : 18.5;
 
   let subsidyEstimate = 0;
@@ -585,6 +570,7 @@ export function buildFinancialPlan(params: {
     promoterContribution,
     promoterContributionPercent: promoterPercent,
     financingGap,
+    requiresExternalFinancing: gapAnalysis.requiresExternalFinancing,
     eligibleSubsidyEstimate: subsidyEstimate,
     bankTermLoanRequired,
     workingCapitalBankLoan: Math.round(annualTurnoverYear1 * 0.15),
@@ -604,9 +590,11 @@ export function buildFinancialPlan(params: {
     profitBeforeTax,
     taxEstimate,
     profitAfterTax,
-    debtServiceCoverageRatio: dscr,
-    breakEvenSalesPercent,
-    breakEvenMonthlyRevenue: Math.round(monthlyRev * (breakEvenSalesPercent / 100)),
+    debtServiceCoverageRatio: dscrAnalysis.dscr,
+    dscrStatus: dscrAnalysis.dscrStatus,
+    breakEvenSalesPercent: beAnalysis.breakEvenSalesPercent,
+    breakEvenMonthlyRevenue: beAnalysis.breakEvenMonthlyRevenue,
+    breakEvenStatus: beAnalysis.breakEvenStatus,
     paybackPeriodYears,
     returnOnInvestmentPercent,
     cashFlow,
