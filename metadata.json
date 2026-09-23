@@ -1,0 +1,6 @@
+{
+  "name": "GramUdyam",
+  "description": "Turn your business idea into a practical plan with enterprise discovery, capital planning, location intelligence, government schemes, and loan options.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
