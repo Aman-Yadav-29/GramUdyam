@@ -36,8 +36,8 @@ export class DocumentReadinessService {
       (s) => s.id === schemeId ||
              s.id.toLowerCase() === normalized ||
              s.id === `scheme_${normalized}` ||
-             s.code.toLowerCase() === normalized ||
-             s.shortName.toLowerCase() === normalized
+             s.code?.toLowerCase() === normalized ||
+             s.shortName?.toLowerCase() === normalized
     );
   }
 
@@ -229,9 +229,12 @@ export class DocumentReadinessService {
    * Builds structured DocumentRequirement objects strictly from the scheme's documented requirements.
    */
   public getDocumentRequirements(
-    scheme: GovernmentScheme,
+    schemeOrId: GovernmentScheme | string,
     userDeclarations: Record<string, UserDocumentDeclaration> = {}
   ): DocumentRequirement[] {
+    const scheme = typeof schemeOrId === 'string' ? this.getSchemeById(schemeOrId) : schemeOrId;
+    if (!scheme) return [];
+
     return scheme.requiredDocuments.map((docText, index) => {
       const id = `${scheme.id}_doc_${index}`;
       const category = this.inferCategory(docText);

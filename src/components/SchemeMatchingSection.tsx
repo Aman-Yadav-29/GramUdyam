@@ -149,7 +149,7 @@ export const SchemeMatchingSection: React.FC<SchemeMatchingSectionProps> = ({
         businessName,
         businessCategory,
         projectCost: totalProjectCost,
-        availableCapital,
+        availableCapital: capitalAvailable,
         financingGap,
         fixedAssets,
         workingCapital,
@@ -182,7 +182,7 @@ export const SchemeMatchingSection: React.FC<SchemeMatchingSectionProps> = ({
       const updatedDocs = plan.documents.map((d) => {
         const userStatus = mergedDeclarations[d.id] || d.initialStatus;
         if (userStatus === 'available') markedAvailable++;
-        else if (userStatus === 'to_prepare' || userStatus === 'missing') needToPrepare++;
+        else if (userStatus === 'to_prepare') needToPrepare++;
         else needVerification++;
 
         return {
@@ -238,7 +238,7 @@ export const SchemeMatchingSection: React.FC<SchemeMatchingSectionProps> = ({
     const updatedDocs = readinessPlan.documents.map((d) => {
       const userStatus = newDeclarations[d.id] || d.initialStatus;
       if (userStatus === 'available') markedAvailable++;
-      else if (userStatus === 'to_prepare' || userStatus === 'missing') needToPrepare++;
+      else if (userStatus === 'to_prepare') needToPrepare++;
       else needVerification++;
 
       return {

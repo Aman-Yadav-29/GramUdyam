@@ -14,6 +14,7 @@ import { LoanProduct } from '../types/loans.ts';
 import { DistrictIntelligence } from '../types/location.ts';
 import { AgriLocationAnalysis } from '../types/agriLocation.ts';
 import { AuthSession, UserAccount } from '../types/auth.ts';
+import { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
 
 const SESSION_STORAGE_KEY = 'gramudyam_auth_session';
 
@@ -276,6 +277,105 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(payload)
     });
+  }
+
+  // Phase 9 & 10: Business & Financing Plan and Workspace
+  public async generateBusinessPlan(payload: any): Promise<BusinessPlan> {
+    const res = await this.request<{ success: boolean; plan: BusinessPlan }>('/api/business-plans/generate', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return res.plan;
+  }
+
+  public async saveBusinessPlan(plan: BusinessPlan, title?: string): Promise<SavedBusinessPlanRecord> {
+    const res = await this.request<{ success: boolean; record: SavedBusinessPlanRecord }>('/api/business-plans/save', {
+      method: 'POST',
+      body: JSON.stringify({ plan, title })
+    });
+    return res.record;
+  }
+
+  public async getUserBusinessPlans(statusFilter?: 'all' | 'active' | 'archived'): Promise<SavedBusinessPlanRecord[]> {
+    const query = statusFilter && statusFilter !== 'all' ? `?status=${statusFilter}` : '';
+    const res = await this.request<{ success: boolean; plans: SavedBusinessPlanRecord[] }>(`/api/business-plans${query}`);
+    return res.plans || [];
+  }
+
+  public async getBusinessPlanById(id: string): Promise<SavedBusinessPlanRecord> {
+    const res = await this.request<{ success: boolean; record: SavedBusinessPlanRecord }>(`/api/business-plans/${id}`);
+    return res.record;
+  }
+
+  public async updateBusinessPlanNarrative(
+    id: string,
+    narrative: BusinessPlanNarrativeSection
+  ): Promise<SavedBusinessPlanRecord> {
+    const res = await this.request<{ success: boolean; record: SavedBusinessPlanRecord }>(`/api/business-plans/${id}/narrative`, {
+      method: 'PATCH',
+      body: JSON.stringify({ narrative })
+    });
+    return res.record;
+  }
+
+  public async updateBusinessPlanStatus(
+    id: string,
+    status: 'active' | 'archived'
+  ): Promise<SavedBusinessPlanRecord> {
+    const res = await this.request<{ success: boolean; record: SavedBusinessPlanRecord }>(`/api/business-plans/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
+    return res.record;
+  }
+
+  public async updateBusinessPlanTitle(
+    id: string,
+    title: string
+  ): Promise<SavedBusinessPlanRecord> {
+    const res = await this.request<{ success: boolean; record: SavedBusinessPlanRecord }>(`/api/business-plans/${id}/title`, {
+      method: 'PATCH',
+      body: JSON.stringify({ title })
+    });
+    return res.record;
+  }
+
+  public async deleteBusinessPlan(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/business-plans/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  public async createPlanShareToken(id: string): Promise<{ shareToken: string; shareUrl: string }> {
+    return this.request<{ success: boolean; shareToken: string; shareUrl: string }>(`/api/business-plans/${id}/share`, {
+      method: 'POST'
+    });
+  }
+
+  public async revokePlanShareToken(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/business-plans/${id}/share`, {
+      method: 'DELETE'
+    });
+  }
+
+  public async getSharedPlan(token: string): Promise<{
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+    plan: BusinessPlan;
+    shareToken: string;
+  }> {
+    const res = await this.request<{
+      success: boolean;
+      data: {
+        title: string;
+        createdAt: string;
+        updatedAt: string;
+        plan: BusinessPlan;
+        shareToken: string;
+      };
+    }>(`/api/business-plans/shared/${token}`);
+    return res.data;
   }
 }
 

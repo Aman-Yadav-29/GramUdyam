@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   ArrowLeft, 
   IndianRupee, 
@@ -43,6 +43,10 @@ import { BudgetDiscoveryEngine } from '../components/BudgetDiscoveryEngine.tsx';
 import { LocationGisCatchmentMap } from '../components/LocationGisCatchmentMap.tsx';
 import { AgricultureLocationAnalysisCard } from '../components/AgricultureLocationAnalysisCard.tsx';
 import { SchemeMatchingSection } from '../components/SchemeMatchingSection.tsx';
+import { BusinessPlanView } from '../components/BusinessPlanView.tsx';
+import { assembleBusinessPlan } from '../utils/businessPlanGenerator.ts';
+import { ENTERPRISE_TEMPLATES } from '../data/enterpriseTemplatesData.ts';
+import { apiClient } from '../services/apiClient.ts';
 import { CalculatedBusinessPlan } from '../types/business.ts';
 import { FinancialScenarioType } from '../types/financial.ts';
 
@@ -64,6 +68,8 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
     setDistrict,
     villageOrTown,
     setVillageOrTown,
+    subDistrictOrBlock,
+    setSubDistrictOrBlock,
     locationType,
     setLocationType,
     promoterCategory,
@@ -86,11 +92,48 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
   const { user, isGuest, isAuthenticated, logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState<
-    'discovery' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap'
+    'discovery' | 'plan' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap'
   >('discovery');
 
   const capex = financialPlan ? deriveCapexBreakdown(financialPlan.fixedAssetsCost) : null;
   const opex = financialPlan ? deriveMonthlyOpex(financialPlan.annualOperatingCostYear1) : null;
+
+  // Phase 9: Assembled Business & Financing Plan (Invariant consumption of Phase 3-8 source-of-truth)
+  const assembledPlan = useMemo(() => {
+    if (!selectedEnterprise || !financialPlan) return null;
+    const template = ENTERPRISE_TEMPLATES.find((t) => t.id === selectedEnterprise.id) || selectedEnterprise;
+    return assembleBusinessPlan({
+      enterprise: template as any,
+      financialPlan,
+      availableCapital: capitalAvailable ?? 0,
+      location: {
+        state,
+        district,
+        subDistrictOrBlock,
+        villageOrTown,
+        locationType
+      },
+      districtData,
+      agriLocationAnalysis,
+      entrepreneurProfile: {
+        isRural: locationType === 'rural',
+        socialCategory: promoterCategory === 'special' ? 'Special Category (SC/ST/Woman/OBC)' : 'General',
+        isNewBusiness: true
+      }
+    });
+  }, [
+    selectedEnterprise,
+    financialPlan,
+    capitalAvailable,
+    state,
+    district,
+    subDistrictOrBlock,
+    villageOrTown,
+    locationType,
+    districtData,
+    agriLocationAnalysis,
+    promoterCategory
+  ]);
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 pb-16">
@@ -172,12 +215,25 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
                   {selectedEnterprise.tagline}
                 </div>
               </div>
-              <button
-                onClick={() => setActiveTab('discovery')}
-                className="px-3.5 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition cursor-pointer self-start sm:self-center shrink-0"
-              >
-                ← Compare All Businesses by Budget
-              </button>
+              <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                <button
+                  onClick={() => setActiveTab('plan')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shadow-xs flex items-center gap-1.5 ${
+                    activeTab === 'plan'
+                      ? 'bg-emerald-900 text-white'
+                      : 'bg-emerald-700 text-white hover:bg-emerald-800'
+                  }`}
+                >
+                  <FileCheck className="h-3.5 w-3.5" />
+                  <span>Business & Financing Plan</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('discovery')}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition cursor-pointer"
+                >
+                  ← Compare All
+                </button>
+              </div>
             </div>
 
             {/* Location & Demographic Parameters for DPR */}
@@ -410,6 +466,19 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               <IndianRupee className="h-3.5 w-3.5" />
               <span>Budget Discovery (All Businesses)</span>
             </button>
+            {selectedEnterprise && (
+              <button
+                onClick={() => setActiveTab('plan')}
+                className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
+                  activeTab === 'plan'
+                    ? 'border-emerald-600 text-emerald-800 font-bold'
+                    : 'border-transparent text-emerald-700 hover:text-emerald-900'
+                }`}
+              >
+                <FileCheck className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Business & Financing Plan</span>
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('overview')}
               className={`pb-2.5 border-b-2 cursor-pointer transition ${
@@ -543,6 +612,36 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
           />
         ) : selectedEnterprise && financialPlan ? (
           <div>
+            {/* 0. CONSOLIDATED BUSINESS & FINANCING PLAN (PHASE 9) */}
+            {activeTab === 'plan' && assembledPlan && (
+              <div className="mb-8">
+                <BusinessPlanView
+                  plan={assembledPlan}
+                  onNavigateTab={(tab) => {
+                    if (tab === 'business' || tab === 'budget') {
+                      setActiveTab('discovery');
+                    } else if (tab === 'location') {
+                      setActiveTab('location');
+                    } else if (tab === 'financials') {
+                      setActiveTab('financials');
+                    } else if (tab === 'agriculture') {
+                      setActiveTab('location');
+                    } else if (tab === 'schemes') {
+                      setActiveTab('schemes');
+                    } else if (tab === 'documents') {
+                      setActiveTab('documents');
+                    }
+                  }}
+                  onSavePlan={async (planToSave) => {
+                    await apiClient.saveBusinessPlan(planToSave);
+                  }}
+                  onUpdateNarrative={async (narrative) => {
+                    await apiClient.updateBusinessPlanNarrative(assembledPlan.id, narrative);
+                  }}
+                />
+              </div>
+            )}
+
             {/* 1. OVERVIEW & VIABILITY */}
             {activeTab === 'overview' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1105,7 +1204,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
                 locationType={locationType}
                 fixedAssets={capex?.totalCapex}
                 workingCapital={financialPlan.workingCapitalBankLoan}
-                monthlyRevenue={financialPlan.monthlyGrossRevenue}
+                monthlyRevenue={financialPlan.monthlyRevenue}
                 monthlyOpex={opex?.totalMonthlyOpex}
                 monthlyNetProfit={financialPlan.monthlyNetProfit}
                 estimatedEmi={financialPlan.monthlyEmi}

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import businessRoutes from './businessRoutes.ts';
+import businessPlanRoutes from './businessPlanRoutes.ts';
 import financialRoutes from './financialRoutes.ts';
 import schemeRoutes from './schemeRoutes.ts';
 import loanRoutes from './loanRoutes.ts';
@@ -12,6 +13,7 @@ const apiRouter = Router();
 
 // Core sub-routers
 apiRouter.use('/business', businessRoutes);
+apiRouter.use('/business-plans', businessPlanRoutes);
 apiRouter.use('/financial', financialRoutes);
 apiRouter.use('/schemes', schemeRoutes);
 apiRouter.use('/loans', loanRoutes);

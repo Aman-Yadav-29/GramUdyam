@@ -78,11 +78,11 @@ async function runTests() {
     assert(quotationDoc.category === 'financial', 'Machinery quotation categorized under financial');
   }
 
-  // Test 4: Default user status is 'needs_verification' or 'required'
+  // Test 4: Default user status is 'conditional' or 'required'
   console.log('\n[Group 4: Default Initial Status]');
   for (const doc of pmegpDocs) {
     assert(
-      doc.initialStatus === 'needs_verification' || doc.initialStatus === 'required',
+      doc.initialStatus === 'required' || doc.initialStatus === 'conditional',
       `Document '${doc.name}' starts with safe unverified status: ${doc.initialStatus}`
     );
     assert(doc.userStatus !== 'available', `Document '${doc.name}' does NOT falsely default to available`);
@@ -159,10 +159,10 @@ async function runTests() {
   assert(dpr?.financingGap === 650000, 'Financing gap invariant (650000)');
   assert(dpr?.fixedAssetsEstimate === 600000, 'Fixed assets invariant (600000)');
   assert(dpr?.workingCapitalEstimate === 250000, 'Working capital invariant (250000)');
-  assert(dpr?.debtServiceCoverageRatio === 2.15, 'DSCR invariant (2.15)');
-  assert(dpr?.monthlyEmiEstimate === 13658, 'Monthly EMI invariant (13658)');
-  assert(dpr?.formattedText.includes('Mini Mustard Oil Mill'), 'Formatted text includes business name');
-  assert(dpr?.formattedText.includes('8,50,000'), 'Formatted text contains formatted project cost');
+  assert(dpr?.dscr === 2.15, 'DSCR invariant (2.15)');
+  assert(dpr?.estimatedEmi === 13658, 'Monthly EMI invariant (13658)');
+  assert(Boolean(dpr?.formattedText.includes('Mini Mustard Oil Mill')), 'Formatted text includes business name');
+  assert(Boolean(dpr?.formattedText.includes('8,50,000')), 'Formatted text contains formatted project cost');
 
   // Test 8: Not Eligible scheme handling
   console.log('\n[Group 8: Not Eligible Scheme Handling]');
@@ -196,8 +196,46 @@ async function runTests() {
     'Official application URL is identical to Phase 7 source'
   );
 
-  // Test 10: Store persistence (guest & session)
-  console.log('\n[Group 10: Persistence Layer]');
+  // Missing application URL verification (State Horticulture Mission has officialApplicationUrl: null)
+  const hortScheme = GOVERNMENT_SCHEMES_DATASET.find((s) => s.id === 'scheme_state_horticulture_mission')!;
+  assert(hortScheme.officialApplicationUrl === null, 'Horticulture Mission has null application URL');
+  const hortPlan = documentReadinessService.getSchemeReadinessPlan({
+    schemeId: 'scheme_state_horticulture_mission',
+    eligibilityStatus: 'eligible'
+  });
+  assert(hortPlan.officialApplicationUrl === null, 'Readiness plan preserves null application URL without fabrication');
+
+  // Test 10: Potentially Eligible status handling
+  console.log('\n[Group 10: Potentially Eligible Scheme Handling]');
+  const potentialPlan = documentReadinessService.getSchemeReadinessPlan({
+    schemeId: 'pmegp',
+    eligibilityStatus: 'potentially_eligible'
+  });
+  assert(potentialPlan.eligibilityStatus === 'potentially_eligible', 'Potentially eligible status preserved');
+
+  // Test 11: Error handling for invalid schemes
+  console.log('\n[Group 11: Service Error Handling]');
+  let caughtError = false;
+  try {
+    documentReadinessService.getSchemeReadinessPlan({
+      schemeId: 'non_existent_scheme_999'
+    });
+  } catch (err: any) {
+    caughtError = true;
+    assert(err.message.includes('not found'), 'Invalid scheme throws not found error');
+  }
+  assert(caughtError, 'Error thrown for non-existent scheme');
+
+  // Test 12: Multiple schemes isolation (no bleeding across schemes)
+  console.log('\n[Group 12: Multiple Schemes Isolation]');
+  const pmegpDocsAgain = documentReadinessService.getDocumentRequirements('pmegp');
+  const mudraDocsAgain = documentReadinessService.getDocumentRequirements('mudra');
+  assert(pmegpDocsAgain[0].id.startsWith('scheme_pmegp_'), 'PMEGP docs have scheme_pmegp prefix');
+  assert(mudraDocsAgain[0].id.startsWith('scheme_mudra_'), 'MUDRA docs have scheme_mudra prefix');
+  assert(pmegpDocsAgain[0].id !== mudraDocsAgain[0].id, 'Document IDs are strictly distinct across schemes');
+
+  // Test 13: Store persistence (guest & session)
+  console.log('\n[Group 13: Persistence Layer]');
   const guestSaved = documentReadinessService.saveReadiness(undefined, 'mudra', {
     [documentReadinessService.getDocumentRequirements('mudra')[0].id]: 'available'
   });
@@ -207,8 +245,8 @@ async function runTests() {
   const retrievedGuest = documentReadinessService.getSavedDeclarations(undefined, 'mudra');
   assert(Object.keys(retrievedGuest).length === 1, 'Retrieved guest declarations match saved');
 
-  // Test 11: Phase 4 & Phase 7 Regression & Invariance Check
-  console.log('\n[Group 11: Phase 4 & Phase 7 Invariance Regression]');
+  // Test 14: Phase 4 & Phase 7 Regression & Invariance Check
+  console.log('\n[Group 14: Phase 4 & Phase 7 Invariance Regression]');
   const projections = financialEngineService.generateFinancialProjections({
     enterpriseId: 'oil_mill',
     capitalAvailable: 300000,
@@ -224,7 +262,7 @@ async function runTests() {
   assert(fp.financingGap === Math.max(0, fp.totalProjectCost - 300000), 'Phase 4 financing gap invariant');
 
   const matchResult = schemeMatchingService.matchSchemes({
-    businessId: 'oil_mill',
+    businessId: 'ent_oil_expeller',
     availableCapital: 300000,
     projectCost: fp.totalProjectCost,
     financingGap: fp.financingGap,
@@ -234,6 +272,7 @@ async function runTests() {
       ruralUrban: 'rural'
     },
     entrepreneurProfile: {
+      age: 30,
       isNewBusiness: true,
       isRuralEntrepreneur: true
     }
