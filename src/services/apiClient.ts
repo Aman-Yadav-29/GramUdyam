@@ -9,6 +9,7 @@ import {
 import { FinancialPlan, CapexBreakdown, OpexMonthlyBreakdown } from '../types/financial.ts';
 import { GovernmentScheme, SchemeCalculationResult } from '../types/schemes.ts';
 import { SchemeMatchingInput, SchemeMatchingResult } from '../types/scheme.ts';
+import { SchemeReadinessPlan, UserDocumentDeclaration, SaveReadinessResponse } from '../types/documentReadiness.ts';
 import { LoanProduct } from '../types/loans.ts';
 import { DistrictIntelligence } from '../types/location.ts';
 import { AgriLocationAnalysis } from '../types/agriLocation.ts';
@@ -153,6 +154,41 @@ class ApiClient {
     return this.request<SchemeMatchingResult>('/api/schemes/match', {
       method: 'POST',
       body: JSON.stringify(input)
+    });
+  }
+
+  // Phase 8: Scheme Document Readiness & Application Workflow
+  public async getSchemeReadiness(schemeId: string, params?: {
+    eligibilityStatus?: string;
+    businessName?: string;
+    businessCategory?: string;
+    projectCost?: number;
+    availableCapital?: number;
+    financingGap?: number;
+    fixedAssets?: number;
+    workingCapital?: number;
+    monthlyRevenue?: number;
+    monthlyOpex?: number;
+    monthlyNetProfit?: number;
+    estimatedEmi?: number;
+    dscr?: number;
+  }): Promise<SchemeReadinessPlan> {
+    const query = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) {
+          query.set(k, String(v));
+        }
+      });
+    }
+    const qStr = query.toString();
+    return this.request<SchemeReadinessPlan>(`/api/schemes/${schemeId}/readiness${qStr ? `?${qStr}` : ''}`);
+  }
+
+  public async saveSchemeReadiness(schemeId: string, declarations: Record<string, UserDocumentDeclaration>): Promise<SaveReadinessResponse> {
+    return this.request<SaveReadinessResponse>('/api/schemes/readiness', {
+      method: 'POST',
+      body: JSON.stringify({ schemeId, declarations })
     });
   }
 

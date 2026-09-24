@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { schemeEngineService } from '../services/schemeEngineService.ts';
 import { schemeMatchingService } from '../services/schemeMatchingService.ts';
+import { documentReadinessService } from '../services/documentReadinessService.ts';
+import { authService } from '../services/authService.ts';
 
 export const getAllSchemesHandler = async (_req: Request, res: Response) => {
   try {
@@ -155,4 +157,163 @@ export const matchSchemesHandler = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * Phase 8: Get Document Readiness Checklist & Preparation Plan for a Scheme
+ */
+export const getSchemeReadinessHandler = async (req: Request, res: Response) => {
+  try {
+    const { schemeId } = req.params;
+    const { eligibilityStatus, businessName, businessCategory, projectCost, availableCapital, financingGap, fixedAssets, workingCapital, monthlyRevenue, monthlyOpex, monthlyNetProfit, estimatedEmi, dscr } = req.query;
+
+    if (!schemeId || typeof schemeId !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'Valid schemeId parameter is required' },
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const scheme = documentReadinessService.getSchemeById(schemeId);
+    if (!scheme) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'SCHEME_NOT_FOUND', message: `Scheme with ID '${schemeId}' was not found in official catalog.` },
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    // Resolve optional authenticated user token
+    let userId: string | undefined;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const user = authService.verifySession(token);
+      if (user) {
+        userId = user.id;
+      }
+    }
+
+    const savedDeclarations = documentReadinessService.getSavedDeclarations(userId, schemeId);
+
+    const financialPlan = projectCost !== undefined
+      ? {
+          businessName: (businessName as string) || 'Rural Enterprise',
+          businessCategory: businessCategory as string,
+          projectCost: Number(projectCost) || 0,
+          availableCapital: Number(availableCapital) || 0,
+          financingGap: Number(financingGap) || 0,
+          fixedAssets: fixedAssets ? Number(fixedAssets) : undefined,
+          workingCapital: workingCapital ? Number(workingCapital) : undefined,
+          monthlyRevenue: monthlyRevenue ? Number(monthlyRevenue) : undefined,
+          monthlyOpex: monthlyOpex ? Number(monthlyOpex) : undefined,
+          monthlyNetProfit: monthlyNetProfit ? Number(monthlyNetProfit) : undefined,
+          estimatedEmi: estimatedEmi ? Number(estimatedEmi) : undefined,
+          dscr: dscr ? Number(dscr) : undefined
+        }
+      : undefined;
+
+    const plan = documentReadinessService.getSchemeReadinessPlan({
+      schemeId,
+      eligibilityStatus: (eligibilityStatus as any) || 'needs_verification',
+      userDeclarations: savedDeclarations,
+      financialPlan
+    });
+
+    res.json({
+      success: true,
+      data: plan,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'READINESS_ERROR', message: error.message || 'Failed to retrieve scheme readiness' },
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+/**
+ * Phase 8: Save User Document Readiness Declarations
+ */
+export const saveSchemeReadinessHandler = async (req: Request, res: Response) => {
+  try {
+    const { schemeId, declarations } = req.body;
+
+    if (!schemeId || typeof schemeId !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'Valid schemeId is required' },
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const scheme = documentReadinessService.getSchemeById(schemeId);
+    if (!scheme) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'SCHEME_NOT_FOUND', message: `Scheme '${schemeId}' not found.` },
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    if (!declarations || typeof declarations !== 'object' || Array.isArray(declarations)) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'declarations must be an object of document ID to declaration status' },
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    // Validate declarations strictly (prevents fake document IDs)
+    const validation = documentReadinessService.validateDeclarations(schemeId, declarations);
+    if (!validation.valid) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_DOCUMENT_ID', message: validation.errors.join('; ') },
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    // Resolve optional authenticated user token
+    let userId: string | undefined;
+    let isGuest = true;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const user = authService.verifySession(token);
+      if (user) {
+        userId = user.id;
+        isGuest = user.isGuest;
+      }
+    }
+
+    const summary = documentReadinessService.saveReadiness(userId, schemeId, declarations);
+
+    res.json({
+      success: true,
+      data: {
+        schemeId,
+        summary,
+        savedAt: new Date().toISOString(),
+        isGuest
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'SAVE_READINESS_ERROR', message: error.message || 'Failed to save readiness' },
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
 

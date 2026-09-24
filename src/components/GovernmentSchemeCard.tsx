@@ -12,16 +12,18 @@ import {
   IndianRupee,
   ChevronDown,
   ChevronUp,
-  CheckCircle2
+  CheckCircle2,
+  ClipboardList
 } from 'lucide-react';
 import { SchemeMatch } from '../types/scheme.ts';
 import { formatINR } from '../utils/formatters.ts';
 
 interface GovernmentSchemeCardProps {
   match: SchemeMatch;
+  onSelectForReadiness?: (schemeId: string) => void;
 }
 
-export const GovernmentSchemeCard: React.FC<GovernmentSchemeCardProps> = ({ match }) => {
+export const GovernmentSchemeCard: React.FC<GovernmentSchemeCardProps> = ({ match, onSelectForReadiness }) => {
   const [showDocuments, setShowDocuments] = useState(false);
   const [showVerificationSteps, setShowVerificationSteps] = useState(false);
 
@@ -295,7 +297,17 @@ export const GovernmentSchemeCard: React.FC<GovernmentSchemeCardProps> = ({ matc
           )}
         </div>
 
-        <div>
+        <div className="flex flex-wrap items-center gap-2">
+          {onSelectForReadiness && (
+            <button
+              onClick={() => onSelectForReadiness(match.scheme.id)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-stone-800 bg-white border border-stone-300 hover:bg-stone-100 transition-colors shadow-2xs"
+            >
+              <ClipboardList className="h-3.5 w-3.5 text-stone-600" />
+              <span>Prepare Documents & Checklist</span>
+            </button>
+          )}
+
           {match.officialApplicationUrl ? (
             <a
               href={match.officialApplicationUrl}

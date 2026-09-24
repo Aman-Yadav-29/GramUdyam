@@ -1091,17 +1091,25 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               </div>
             )}
 
-            {/* 4. GOVERNMENT SCHEMES & LOANS (PHASE 7) */}
+            {/* 4. GOVERNMENT SCHEMES & LOANS (PHASE 7 & 8) */}
             {activeTab === 'schemes' && (
               <SchemeMatchingSection
                 businessId={selectedEnterprise.id}
                 businessName={selectedEnterprise.name}
+                businessCategory={selectedEnterprise.category}
                 capitalAvailable={capitalAvailable ?? 0}
                 totalProjectCost={financialPlan.totalProjectCost}
                 financingGap={financialPlan.bankTermLoanRequired ?? Math.max(0, financialPlan.totalProjectCost - (capitalAvailable ?? 0))}
                 state={state}
                 district={district}
                 locationType={locationType}
+                fixedAssets={capex?.totalCapex}
+                workingCapital={financialPlan.workingCapitalBankLoan}
+                monthlyRevenue={financialPlan.monthlyGrossRevenue}
+                monthlyOpex={opex?.totalMonthlyOpex}
+                monthlyNetProfit={financialPlan.monthlyNetProfit}
+                estimatedEmi={financialPlan.monthlyEmi}
+                dscr={financialPlan.debtServiceCoverageRatio ?? undefined}
               />
             )}
 
