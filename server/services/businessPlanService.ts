@@ -581,7 +581,7 @@ export class BusinessPlanService {
       </tr>
       <tr>
         <td>Working Capital (Pre-Op &amp; Inventory)</td>
-        <td>&#8377;${plan.financials.workingCapital.toLocaleString('en-IN')}</td>
+        <td>&#8377;${(plan.financials.workingCapitalRequirement ?? plan.financials.workingCapital ?? 0).toLocaleString('en-IN')}</td>
         <td>Raw materials and operating reserves</td>
       </tr>
       <tr>
@@ -591,7 +591,7 @@ export class BusinessPlanService {
       </tr>
       <tr>
         <td>Bank Term Loan Required</td>
-        <td>&#8377;${plan.financials.bankTermLoan.toLocaleString('en-IN')}</td>
+        <td>&#8377;${(plan.financials.bankTermLoanRequired ?? plan.financials.bankTermLoan ?? 0).toLocaleString('en-IN')}</td>
         <td>Debt financing component</td>
       </tr>
       <tr>
@@ -606,7 +606,7 @@ export class BusinessPlanService {
       </tr>
       <tr>
         <td>Monthly Debt Service (EMI)</td>
-        <td>${plan.financials.monthlyEmi ? `&#8377;${plan.financials.monthlyEmi.toLocaleString('en-IN')}` : 'No Debt Required'}</td>
+        <td>${(plan.financials.estimatedMonthlyEmi ?? plan.financials.monthlyEmi) ? `&#8377;${(plan.financials.estimatedMonthlyEmi ?? plan.financials.monthlyEmi)!.toLocaleString('en-IN')}` : 'No Debt Required'}</td>
         <td>Benchmark: 5 years @ 9.5% p.a.</td>
       </tr>
       <tr>
@@ -617,7 +617,7 @@ export class BusinessPlanService {
       <tr>
         <td>Affordability Classification</td>
         <td><strong>${escape(plan.financials.affordabilityClassification)}</strong></td>
-        <td>${escape(plan.financials.affordabilityReason)}</td>
+        <td>${escape(plan.financials.plainLanguageInterpretation ?? plan.financials.affordabilityReason)}</td>
       </tr>
     </tbody>
   </table>

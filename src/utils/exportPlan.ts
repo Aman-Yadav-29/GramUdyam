@@ -172,7 +172,7 @@ export function generatePlanHtml(plan: BusinessPlan, customTitle?: string): stri
       </tr>
       <tr>
         <td>Working Capital (Pre-Op &amp; Inventory)</td>
-        <td>&#8377;${plan.financials.workingCapital.toLocaleString('en-IN')}</td>
+        <td>&#8377;${(plan.financials.workingCapitalRequirement ?? plan.financials.workingCapital ?? 0).toLocaleString('en-IN')}</td>
         <td>Raw materials, utilities, operating buffer</td>
       </tr>
       <tr>
@@ -182,7 +182,7 @@ export function generatePlanHtml(plan: BusinessPlan, customTitle?: string): stri
       </tr>
       <tr>
         <td>Bank Term Loan Required</td>
-        <td>&#8377;${plan.financials.bankTermLoan.toLocaleString('en-IN')}</td>
+        <td>&#8377;${(plan.financials.bankTermLoanRequired ?? plan.financials.bankTermLoan ?? 0).toLocaleString('en-IN')}</td>
         <td>Project Cost minus Promoter Contribution</td>
       </tr>
       <tr>
@@ -197,7 +197,7 @@ export function generatePlanHtml(plan: BusinessPlan, customTitle?: string): stri
       </tr>
       <tr>
         <td>Monthly Debt Service (EMI)</td>
-        <td>${plan.financials.monthlyEmi ? `&#8377;${plan.financials.monthlyEmi.toLocaleString('en-IN')}` : 'No Debt Required'}</td>
+        <td>${(plan.financials.estimatedMonthlyEmi ?? plan.financials.monthlyEmi) ? `&#8377;${(plan.financials.estimatedMonthlyEmi ?? plan.financials.monthlyEmi)!.toLocaleString('en-IN')}` : 'No Debt Required'}</td>
         <td>Calculated standard term loan (5 yrs @ 9.5% p.a.)</td>
       </tr>
       <tr>
@@ -208,7 +208,7 @@ export function generatePlanHtml(plan: BusinessPlan, customTitle?: string): stri
       <tr>
         <td>Affordability Classification</td>
         <td><strong>${escape(plan.financials.affordabilityClassification)}</strong></td>
-        <td>${escape(plan.financials.affordabilityReason)}</td>
+        <td>${escape(plan.financials.plainLanguageInterpretation ?? plan.financials.affordabilityReason)}</td>
       </tr>
     </tbody>
   </table>
@@ -281,18 +281,18 @@ export function generatePlanText(plan: BusinessPlan): string {
   lines.push('1. UNIT ECONOMICS & FEASIBILITY');
   lines.push(`• Total Project Cost: ${formatINR(plan.financials.totalProjectCost)}`);
   lines.push(`  - Fixed Assets: ${formatINR(plan.financials.fixedAssetsCost)}`);
-  lines.push(`  - Working Capital: ${formatINR(plan.financials.workingCapital)}`);
+  lines.push(`  - Working Capital: ${formatINR(plan.financials.workingCapitalRequirement ?? plan.financials.workingCapital ?? 0)}`);
   lines.push(`• Available Capital: ${formatINR(plan.financials.availableCapital)}`);
   lines.push(`• Promoter Equity: ${formatINR(plan.financials.promoterContribution)}`);
   lines.push(`• Financing Gap: ${formatINR(plan.financials.financingGap)}`);
-  lines.push(`• Bank Term Loan: ${formatINR(plan.financials.bankTermLoan)}`);
+  lines.push(`• Bank Term Loan: ${formatINR(plan.financials.bankTermLoanRequired ?? plan.financials.bankTermLoan ?? 0)}`);
   lines.push(`• Estimated Monthly Revenue: ${formatINR(plan.financials.monthlyRevenue)}`);
   lines.push(`• Monthly OPEX: ${formatINR(plan.financials.monthlyOpex)}`);
   lines.push(`• Monthly Net Profit: ${formatINR(plan.financials.monthlyNetProfit)}`);
-  lines.push(`• Monthly Debt Service (EMI): ${plan.financials.monthlyEmi ? formatINR(plan.financials.monthlyEmi) : 'No Debt'}`);
+  lines.push(`• Monthly Debt Service (EMI): ${(plan.financials.estimatedMonthlyEmi ?? plan.financials.monthlyEmi) ? formatINR((plan.financials.estimatedMonthlyEmi ?? plan.financials.monthlyEmi)!) : 'No Debt'}`);
   lines.push(`• Debt Service Coverage Ratio (DSCR): ${plan.financials.debtServiceCoverageRatio ? `${plan.financials.debtServiceCoverageRatio.toFixed(2)}x` : 'N/A'}`);
   lines.push(`• Affordability Classification: ${plan.financials.affordabilityClassification}`);
-  lines.push(`• Classification Reason: ${plan.financials.affordabilityReason}`);
+  lines.push(`• Classification Reason: ${plan.financials.plainLanguageInterpretation ?? plan.financials.affordabilityReason ?? ''}`);
   lines.push('');
   lines.push('2. MATCHED GOVERNMENT SCHEMES');
   if (plan.schemes && plan.schemes.length > 0) {

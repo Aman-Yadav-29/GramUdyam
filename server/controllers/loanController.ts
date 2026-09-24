@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { loanEngineService } from '../services/loanEngineService.ts';
+import { bankAppraisalService } from '../services/bankAppraisalService.ts';
+import { BankAppraisalRequest } from '../../src/types/bankAppraisal.ts';
 
 export const getAllLoansHandler = async (_req: Request, res: Response) => {
   try {
@@ -37,3 +39,30 @@ export const matchLoansHandler = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getBankAppraisalHandler = async (req: Request, res: Response) => {
+  try {
+    const payload: BankAppraisalRequest = req.body;
+    if (!payload.enterpriseName || !payload.totalProjectCost) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_REQUEST', message: 'enterpriseName and totalProjectCost are required' },
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const dossier = bankAppraisalService.generateAppraisal(payload);
+    res.json({
+      success: true,
+      data: dossier,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'APPRAISAL_ERROR', message: error.message },
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+

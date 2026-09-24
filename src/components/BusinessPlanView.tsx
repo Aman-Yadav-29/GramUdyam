@@ -24,10 +24,16 @@ import {
   Award,
   CheckCircle2,
   AlertTriangle,
-  Info
+  Info,
+  Share2,
+  Download,
+  ChevronRight
 } from 'lucide-react';
+
 import { BusinessPlan, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
 import { formatINR, formatINRLakhs, formatPercent, formatRatio } from '../utils/formatters.ts';
+import { SharePlanModal } from './SharePlanModal.tsx';
+import { downloadPlanAsHtml, downloadPlanAsText } from '../utils/exportPlan.ts';
 
 interface BusinessPlanViewProps {
   plan: BusinessPlan;
@@ -35,6 +41,11 @@ interface BusinessPlanViewProps {
   onSavePlan?: (plan: BusinessPlan) => Promise<void>;
   onUpdateNarrative?: (narrative: BusinessPlanNarrativeSection) => Promise<void>;
   isSaving?: boolean;
+  isReadOnly?: boolean;
+  shareSettings?: {
+    isShared: boolean;
+    shareToken?: string;
+  };
 }
 
 export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
@@ -42,12 +53,16 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
   onNavigateTab,
   onSavePlan,
   onUpdateNarrative,
-  isSaving = false
+  isSaving = false,
+  isReadOnly = false,
+  shareSettings
 }) => {
   const [copied, setCopied] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showProjections, setShowProjections] = useState(false);
   const [isEditingNarrative, setIsEditingNarrative] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Editable narrative local state
   const [narrativeState, setNarrativeState] = useState<BusinessPlanNarrativeSection>({
@@ -101,6 +116,17 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
     setIsEditingNarrative(false);
   };
 
+  const handleOpenShareModal = async () => {
+    if (onSavePlan) {
+      try {
+        await onSavePlan(plan);
+      } catch {
+        // Continue even if save errored, modal will show appropriate feedback
+      }
+    }
+    setIsShareModalOpen(true);
+  };
+
   return (
     <div className="space-y-8 print:p-0 print:space-y-6">
       {/* 1. Header & Action Ribbon */}
@@ -146,6 +172,65 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
               <span>Print Plan</span>
             </button>
 
+            {/* Export HTML / Text */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer shadow-2xs"
+                title="Export complete plan"
+              >
+                <Download className="h-4 w-4 text-stone-600" />
+                <span>Export Plan</span>
+                <ChevronDown className="h-3 w-3 text-stone-400" />
+              </button>
+
+              {showExportMenu && (
+                <div className="absolute right-0 mt-1 w-44 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg z-20 text-xs">
+                  <button
+                    onClick={() => {
+                      downloadPlanAsHtml(plan);
+                      setShowExportMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-stone-700 hover:bg-stone-100 font-medium transition cursor-pointer"
+                  >
+                    Offline HTML (.html)
+                  </button>
+                  <button
+                    onClick={() => {
+                      downloadPlanAsText(plan);
+                      setShowExportMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-stone-700 hover:bg-stone-100 font-medium transition cursor-pointer"
+                  >
+                    Structured Text (.txt)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Share Plan */}
+            {!isReadOnly && (
+              <button
+                onClick={handleOpenShareModal}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer shadow-2xs"
+                title="Share read-only plan link"
+              >
+                <Share2 className="h-4 w-4 text-emerald-700" />
+                <span>Share Plan</span>
+              </button>
+            )}
+
+            {onNavigateTab && (
+              <button
+                onClick={() => onNavigateTab('loans')}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer shadow-2xs"
+                title="View Bank Credit Appraisal & Lending Feasibility Dossier"
+              >
+                <Landmark className="h-4 w-4 text-emerald-800" />
+                <span>Bank Appraisal</span>
+              </button>
+            )}
+
             <button
               onClick={handleCopySummary}
               className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer shadow-2xs"
@@ -154,7 +239,8 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
               <span>{copied ? 'Summary Copied!' : 'Copy Summary'}</span>
             </button>
 
-            {onSavePlan && (
+
+            {!isReadOnly && onSavePlan && (
               <button
                 onClick={handleSave}
                 disabled={isSaving}
@@ -201,6 +287,14 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
             >
               Documents Checklist
             </button>
+            <button
+              onClick={() => onNavigateTab('loans')}
+              className="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold transition cursor-pointer shrink-0 flex items-center gap-1"
+            >
+              <Landmark className="h-3 w-3" />
+              <span>Bank Appraisal Dossier</span>
+            </button>
+
           </div>
         )}
       </div>
@@ -550,7 +644,29 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
             </div>
           </div>
         )}
+
+        {onNavigateTab && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <Landmark className="h-5 w-5 text-emerald-800 shrink-0" />
+              <div>
+                <strong className="text-emerald-950 block">Bank Credit Appraisal & Due Diligence Dossier</strong>
+                <span className="text-stone-700 text-2xs">
+                  Review RBI promoter margin norms, DSCR appraisal banding, CGTMSE/CGFMU collateral-free eligibility, and branch interview preparation.
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigateTab('loans')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-800 text-white px-3.5 py-1.5 font-bold text-xs hover:bg-emerald-900 transition shrink-0 cursor-pointer shadow-2xs"
+            >
+              <span>Open Bank Appraisal</span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </section>
+
 
       {/* 9. Section 7: Financial Outlook & Sensitivity Scenarios */}
       <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-4">
@@ -896,18 +1012,20 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
             </h2>
           </div>
 
-          <button
-            onClick={() => {
-              if (isEditingNarrative) {
-                handleSaveNarrative();
-              } else {
-                setIsEditingNarrative(true);
-              }
-            }}
-            className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:text-emerald-950 transition cursor-pointer print:hidden"
-          >
-            <span>{isEditingNarrative ? 'Done Editing' : 'Edit Narrative'}</span>
-          </button>
+          {!isReadOnly && onUpdateNarrative && (
+            <button
+              onClick={() => {
+                if (isEditingNarrative) {
+                  handleSaveNarrative();
+                } else {
+                  setIsEditingNarrative(true);
+                }
+              }}
+              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:text-emerald-950 transition cursor-pointer print:hidden"
+            >
+              <span>{isEditingNarrative ? 'Done Editing' : 'Edit Narrative'}</span>
+            </button>
+          )}
         </div>
 
         <p className="text-3xs text-stone-500">
@@ -1012,6 +1130,17 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
           DISCLAIMER: Generated by GramUdyam for planning and preparation. It is not an official government application or sanction document.
         </div>
       </section>
+
+      {/* Share Plan Modal */}
+      {!isReadOnly && (
+        <SharePlanModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          planId={plan.id}
+          planTitle={plan.business.businessName}
+          initialShareSettings={shareSettings}
+        />
+      )}
     </div>
   );
 };

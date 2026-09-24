@@ -15,6 +15,7 @@ import { DistrictIntelligence } from '../types/location.ts';
 import { AgriLocationAnalysis } from '../types/agriLocation.ts';
 import { AuthSession, UserAccount } from '../types/auth.ts';
 import { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
+import { BankAppraisalDossier, BankAppraisalRequest } from '../types/bankAppraisal.ts';
 
 const SESSION_STORAGE_KEY = 'gramudyam_auth_session';
 
@@ -201,6 +202,14 @@ class ApiClient {
   public async matchLoans(amount: number, special = false): Promise<Array<LoanProduct & { estimatedEmi: number }>> {
     return this.request<Array<LoanProduct & { estimatedEmi: number }>>(`/api/loans/match?amount=${amount}&special=${special}`);
   }
+
+  public async getBankAppraisal(payload: BankAppraisalRequest): Promise<BankAppraisalDossier> {
+    return this.request<BankAppraisalDossier>('/api/loans/appraisal', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
 
   // Location / GIS
   public async getDistrictData(state: string, district: string): Promise<DistrictIntelligence> {

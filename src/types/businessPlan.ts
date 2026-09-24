@@ -84,10 +84,12 @@ export interface BusinessPlanFinancialSection {
   totalProjectCost: number;
   fixedAssetsCost: number;
   workingCapitalRequirement: number;
+  workingCapital?: number;
   availableCapital: number;
   promoterContribution: number;
   financingGap: number;
   bankTermLoanRequired: number;
+  bankTermLoan?: number;
   workingCapitalBankLoan: number;
   monthlyRevenue: number;
   annualRevenueYear1: number;
@@ -96,9 +98,11 @@ export interface BusinessPlanFinancialSection {
   monthlyNetProfit: number;
   annualNetProfitYear1: number;
   estimatedMonthlyEmi: number | null;
+  monthlyEmi?: number | null;
   debtServiceCoverageRatio: number | null;
   breakEvenCapacityPercent: number | null;
   affordabilityClassification: string;
+  affordabilityReason?: string;
   paybackYears: number;
   netMarginPercent: number;
   plainLanguageInterpretation: string;

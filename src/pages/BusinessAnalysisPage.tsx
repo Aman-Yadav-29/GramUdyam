@@ -33,7 +33,8 @@ import {
   Minus,
   Sliders,
   AlertTriangle,
-  Sprout
+  Sprout,
+  FolderKanban
 } from 'lucide-react';
 import { useBusinessAnalysis } from '../hooks/useBusinessAnalysis.ts';
 import { useAuth } from '../hooks/useAuth.ts';
@@ -44,11 +45,16 @@ import { LocationGisCatchmentMap } from '../components/LocationGisCatchmentMap.t
 import { AgricultureLocationAnalysisCard } from '../components/AgricultureLocationAnalysisCard.tsx';
 import { SchemeMatchingSection } from '../components/SchemeMatchingSection.tsx';
 import { BusinessPlanView } from '../components/BusinessPlanView.tsx';
+import { SavedPlansWorkspace } from '../components/SavedPlansWorkspace.tsx';
 import { assembleBusinessPlan } from '../utils/businessPlanGenerator.ts';
 import { ENTERPRISE_TEMPLATES } from '../data/enterpriseTemplatesData.ts';
 import { apiClient } from '../services/apiClient.ts';
 import { CalculatedBusinessPlan } from '../types/business.ts';
 import { FinancialScenarioType } from '../types/financial.ts';
+import { BusinessPlan } from '../types/businessPlan.ts';
+import { saveGuestPlan, updateGuestPlanNarrative } from '../utils/guestStorage.ts';
+import { BankAppraisalCard } from '../components/BankAppraisalCard.tsx';
+import { generateBankAppraisalDossier } from '../utils/bankAppraisalEngine.ts';
 
 interface BusinessAnalysisPageProps {
   onBackToHome: () => void;
@@ -92,8 +98,10 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
   const { user, isGuest, isAuthenticated, logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState<
-    'discovery' | 'plan' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap'
+    'discovery' | 'plan' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap' | 'workspace'
   >('discovery');
+
+  const [openedPlan, setOpenedPlan] = useState<BusinessPlan | null>(null);
 
   const capex = financialPlan ? deriveCapexBreakdown(financialPlan.fixedAssetsCost) : null;
   const opex = financialPlan ? deriveMonthlyOpex(financialPlan.annualOperatingCostYear1) : null;
@@ -135,6 +143,47 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
     promoterCategory
   ]);
 
+  // Phase 11: Bank Credit Appraisal Dossier (Pure invariant consumption of Phase 4 financial metrics)
+  const bankAppraisalDossier = useMemo(() => {
+    if (!selectedEnterprise || !financialPlan) return null;
+    return generateBankAppraisalDossier({
+      enterpriseId: selectedEnterprise.id,
+      enterpriseName: selectedEnterprise.name,
+      enterpriseCategory: selectedEnterprise.category,
+      totalProjectCost: financialPlan.totalProjectCost,
+      fixedAssetsCost: financialPlan.fixedAssetsCost,
+      workingCapitalRequirement: financialPlan.workingCapitalRequirement,
+      availableCapital: capitalAvailable ?? financialPlan.promoterContribution,
+      promoterContribution: financialPlan.promoterContribution,
+      bankTermLoanRequired: financialPlan.bankTermLoanRequired,
+      financingGap: financialPlan.financingGap,
+      monthlyRevenue: financialPlan.monthlyRevenue,
+      monthlyOpex: financialPlan.monthlyOperatingExpenses,
+      monthlyNetProfit: financialPlan.monthlyNetProfit,
+      debtServiceCoverageRatio: financialPlan.debtServiceCoverageRatio,
+      estimatedMonthlyEmi: financialPlan.monthlyEmi,
+      breakEvenCapacityPercent: financialPlan.breakEvenSalesPercent ?? null,
+      paybackYears: financialPlan.paybackPeriodYears,
+
+      state,
+      district,
+      locationType,
+      isWomanOrSpecialCategory: promoterCategory === 'special',
+      groundwaterConcern: Boolean(agriLocationAnalysis?.factors?.some((f) => (f.factor === 'water' || f.factor === 'groundwater' || f.factorLabel.toLowerCase().includes('water')) && f.status === 'concern'))
+    });
+
+  }, [
+    selectedEnterprise,
+    financialPlan,
+    capitalAvailable,
+    state,
+    district,
+    locationType,
+    promoterCategory,
+    agriLocationAnalysis
+  ]);
+
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 pb-16">
       {/* Top Bar */}
@@ -149,6 +198,19 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
           </button>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveTab('workspace')}
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition cursor-pointer shadow-2xs ${
+                activeTab === 'workspace'
+                  ? 'border-emerald-600 bg-emerald-50 text-emerald-900'
+                  : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50 hover:text-emerald-800'
+              }`}
+              title="Open My Saved Plans workspace"
+            >
+              <FolderKanban className="h-3.5 w-3.5 text-emerald-700" />
+              <span>My Saved Plans</span>
+            </button>
+
             <span className="text-xs text-stone-500 hidden md:inline">
               Location: <strong className="text-stone-800">{district}, {state}</strong>
             </span>
@@ -466,6 +528,17 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               <IndianRupee className="h-3.5 w-3.5" />
               <span>Budget Discovery (All Businesses)</span>
             </button>
+            <button
+              onClick={() => setActiveTab('workspace')}
+              className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
+                activeTab === 'workspace'
+                  ? 'border-emerald-600 text-emerald-800 font-bold'
+                  : 'border-transparent text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <FolderKanban className="h-3.5 w-3.5" />
+              <span>My Saved Plans</span>
+            </button>
             {selectedEnterprise && (
               <button
                 onClick={() => setActiveTab('plan')}
@@ -539,14 +612,16 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('loans')}
-              className={`pb-2.5 border-b-2 cursor-pointer transition ${
+              className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
                 activeTab === 'loans'
                   ? 'border-emerald-600 text-emerald-800'
                   : 'border-transparent text-stone-500 hover:text-stone-800'
               }`}
             >
-              Loan Discovery & EMI
+              <Landmark className="h-3.5 w-3.5" />
+              <span>Bank Appraisal & Loans</span>
             </button>
+
             <button
               onClick={() => setActiveTab('eligibility')}
               className={`pb-2.5 border-b-2 cursor-pointer transition ${
@@ -591,7 +666,80 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
         </div>
 
         {/* Main Tab Content */}
-        {activeTab === 'discovery' || !selectedEnterprise ? (
+        {activeTab === 'workspace' ? (
+          <SavedPlansWorkspace
+            isAuthenticated={isAuthenticated}
+            isGuest={isGuest}
+            onOpenPlan={(plan) => {
+              setOpenedPlan(plan);
+              const matchedEnterprise = ENTERPRISE_TEMPLATES.find((e) => e.id === plan.business.businessId);
+              if (matchedEnterprise) {
+                selectEnterprise(matchedEnterprise as any, plan.financials.availableCapital);
+              }
+              if (plan.location) {
+                setState(plan.location.state);
+                setDistrict(plan.location.district);
+                setLocationType(plan.location.locationType);
+              }
+              setActiveTab('plan');
+            }}
+            onCloseWorkspace={() => setActiveTab('discovery')}
+            onNavigateToLogin={onNavigateToLogin}
+            onNewPlan={() => {
+              setOpenedPlan(null);
+              setActiveTab('discovery');
+            }}
+          />
+        ) : activeTab === 'plan' && (openedPlan || assembledPlan) ? (
+          <div className="mb-8">
+            <BusinessPlanView
+              plan={openedPlan || assembledPlan!}
+              onNavigateTab={(tab) => {
+                if (tab === 'business' || tab === 'budget') {
+                  setActiveTab('discovery');
+                } else if (tab === 'location') {
+                  setActiveTab('location');
+                } else if (tab === 'financials') {
+                  setActiveTab('financials');
+                } else if (tab === 'agriculture') {
+                  setActiveTab('location');
+                } else if (tab === 'schemes') {
+                  setActiveTab('schemes');
+                } else if (tab === 'documents') {
+                  setActiveTab('documents');
+                } else if (tab === 'loans' || tab === 'appraisal') {
+                  setActiveTab('loans');
+                }
+              }}
+
+              onSavePlan={async (planToSave) => {
+                await apiClient.saveBusinessPlan(planToSave);
+                if (isGuest) {
+                  saveGuestPlan(planToSave);
+                }
+              }}
+              onUpdateNarrative={async (narrative) => {
+                const currentPlan = openedPlan || assembledPlan;
+                if (!currentPlan) return;
+                if (isAuthenticated) {
+                  await apiClient.updateBusinessPlanNarrative(currentPlan.id, narrative);
+                } else {
+                  updateGuestPlanNarrative(currentPlan.id, narrative);
+                }
+                if (openedPlan) {
+                  setOpenedPlan({
+                    ...openedPlan,
+                    narrative: {
+                      ...openedPlan.narrative,
+                      ...narrative,
+                      lastEditedAt: new Date().toISOString()
+                    }
+                  });
+                }
+              }}
+            />
+          </div>
+        ) : activeTab === 'discovery' || !selectedEnterprise ? (
           <BudgetDiscoveryEngine
             initialCapital={capitalAvailable ?? undefined}
             initialState={state}
@@ -605,6 +753,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               if (newVillage) setVillageOrTown(newVillage);
             }}
             onSelectBusinessForDeepDive={(plan) => {
+              setOpenedPlan(null);
               setCapitalAvailable(plan.availableCapital);
               selectEnterprise(plan.business as any, plan.availableCapital);
               setActiveTab('overview');
@@ -612,35 +761,6 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
           />
         ) : selectedEnterprise && financialPlan ? (
           <div>
-            {/* 0. CONSOLIDATED BUSINESS & FINANCING PLAN (PHASE 9) */}
-            {activeTab === 'plan' && assembledPlan && (
-              <div className="mb-8">
-                <BusinessPlanView
-                  plan={assembledPlan}
-                  onNavigateTab={(tab) => {
-                    if (tab === 'business' || tab === 'budget') {
-                      setActiveTab('discovery');
-                    } else if (tab === 'location') {
-                      setActiveTab('location');
-                    } else if (tab === 'financials') {
-                      setActiveTab('financials');
-                    } else if (tab === 'agriculture') {
-                      setActiveTab('location');
-                    } else if (tab === 'schemes') {
-                      setActiveTab('schemes');
-                    } else if (tab === 'documents') {
-                      setActiveTab('documents');
-                    }
-                  }}
-                  onSavePlan={async (planToSave) => {
-                    await apiClient.saveBusinessPlan(planToSave);
-                  }}
-                  onUpdateNarrative={async (narrative) => {
-                    await apiClient.updateBusinessPlanNarrative(assembledPlan.id, narrative);
-                  }}
-                />
-              </div>
-            )}
 
             {/* 1. OVERVIEW & VIABILITY */}
             {activeTab === 'overview' && (
@@ -1212,38 +1332,11 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               />
             )}
 
-            {/* 5. LOAN DISCOVERY & EMI */}
-            {activeTab === 'loans' && matchedLoans && (
-              <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-4">
-                <h3 className="font-heading text-lg font-bold text-stone-900">
-                  Institutional Loan Products & Amortization
-                </h3>
-                <p className="text-xs text-stone-500">
-                  Loan term: ₹{formatINRLakhs(financialPlan.bankTermLoanRequired)} with estimated reducing-balance EMI.
-                </p>
-                <div className="divide-y divide-stone-100">
-                  {matchedLoans.map((loan, idx) => (
-                    <div key={idx} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <div className="font-bold text-stone-900 text-sm">{loan.name}</div>
-                        <div className="text-xs text-stone-500 mt-0.5">
-                          Guarantee: {loan.creditGuaranteeCover} • Processing Fee: {loan.processingFeePercent}%
-                        </div>
-                        <div className="text-2xs text-stone-400 mt-1">
-                          Key Docs: {loan.requiredDocuments.join(', ')}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-xs text-stone-500">Estimated Monthly EMI</div>
-                        <div className="font-heading font-extrabold text-stone-900 text-base">
-                          {formatINR(loan.estimatedEmi)} / mo
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* 5. BANK CREDIT APPRAISAL & LOANS (PHASE 11) */}
+            {activeTab === 'loans' && bankAppraisalDossier && (
+              <BankAppraisalCard dossier={bankAppraisalDossier} />
             )}
+
 
             {/* 6. ELIGIBILITY CHECK */}
             {activeTab === 'eligibility' && (
