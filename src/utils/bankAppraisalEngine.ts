@@ -72,10 +72,10 @@ export function assessPromoterMargin(
  * Benchmarked against commercial Indian banking credit appraisal standards.
  */
 export function assessDscrComfort(
-  dscr: number | null,
+  dscr: number | null | undefined,
   loanAmount: number
 ): { band: DscrComfortBand; analysis: string } {
-  if (loanAmount <= 0 || dscr === null) {
+  if (loanAmount <= 0 || dscr === null || dscr === undefined) {
     return {
       band: 'no_debt',
       analysis: 'Zero external bank debt required. The enterprise is 100% equity-funded, carrying no debt-servicing liability or loan default risk.'

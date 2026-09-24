@@ -55,6 +55,8 @@ import { BusinessPlan } from '../types/businessPlan.ts';
 import { saveGuestPlan, updateGuestPlanNarrative } from '../utils/guestStorage.ts';
 import { BankAppraisalCard } from '../components/BankAppraisalCard.tsx';
 import { generateBankAppraisalDossier } from '../utils/bankAppraisalEngine.ts';
+import { DprReportView } from '../components/DprReportView.tsx';
+import { generateDetailedProjectReport } from '../utils/dprGenerator.ts';
 
 interface BusinessAnalysisPageProps {
   onBackToHome: () => void;
@@ -89,6 +91,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
     agriLocationAnalysis,
     financialPlan,
     matchedLoans,
+    matchedSchemes,
     scenario,
     setScenario,
     customScaleUnits,
@@ -182,6 +185,55 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
     promoterCategory,
     agriLocationAnalysis
   ]);
+
+  // Phase 11: 25-Section Detailed Project Report (DPR)
+  const dprReport = useMemo(() => {
+    if (!selectedEnterprise || !financialPlan) return null;
+    const template = ENTERPRISE_TEMPLATES.find((t) => t.id === selectedEnterprise.id) || selectedEnterprise;
+    return generateDetailedProjectReport({
+      enterprise: template as any,
+      financialPlan,
+      capex,
+      opex,
+      availableCapital: capitalAvailable ?? financialPlan.promoterContribution,
+      location: {
+        state,
+        district,
+        subDistrictOrBlock,
+        villageOrTown,
+        locationType
+      },
+      promoterProfile: {
+        name: user?.fullName || (isGuest ? 'Guest Entrepreneur' : 'Promoter / Entrepreneur'),
+        isRural: locationType === 'rural',
+        socialCategory: promoterCategory === 'special' ? 'Special Category (SC/ST/Woman/OBC)' : 'General Category',
+        isNewBusiness: true
+      },
+      districtData,
+      agriLocationAnalysis,
+      schemeMatches: matchedSchemes || [],
+      matchedLoans: matchedLoans || []
+    });
+  }, [
+    selectedEnterprise,
+    financialPlan,
+    capex,
+    opex,
+    capitalAvailable,
+    state,
+    district,
+    subDistrictOrBlock,
+    villageOrTown,
+    locationType,
+    user,
+    isGuest,
+    promoterCategory,
+    districtData,
+    agriLocationAnalysis,
+    matchedSchemes,
+    matchedLoans
+  ]);
+
 
 
   return (
@@ -644,13 +696,14 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('dpr')}
-              className={`pb-2.5 border-b-2 cursor-pointer transition ${
+              className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
                 activeTab === 'dpr'
-                  ? 'border-emerald-600 text-emerald-800'
-                  : 'border-transparent text-stone-500 hover:text-stone-800'
+                  ? 'border-emerald-600 text-emerald-800 font-bold'
+                  : 'border-transparent text-emerald-700 hover:text-emerald-900'
               }`}
             >
-              DPR Blueprint
+              <FileText className="h-3.5 w-3.5 text-emerald-600" />
+              <span>DPR / Business Plan (25 Chapters)</span>
             </button>
             <button
               onClick={() => setActiveTab('roadmap')}
@@ -1420,47 +1473,18 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               </div>
             )}
 
-            {/* 8. DPR BLUEPRINT PREVIEW */}
+            {/* 8. DPR BLUEPRINT (25 STANDARDIZED CHAPTERS) */}
             {activeTab === 'dpr' && (
-              <div className="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8 shadow-xs space-y-6">
-                <div className="flex items-center justify-between border-b border-stone-200 pb-4">
-                  <div>
-                    <span className="text-2xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                      Official DIC & Bank Format
-                    </span>
-                    <h3 className="font-heading text-xl font-bold text-stone-900 mt-1">
-                      Detailed Project Report (DPR) — {selectedEnterprise.name}
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() => window.print()}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer"
-                  >
-                    <Printer className="h-4 w-4" />
-                    <span>Print / PDF</span>
-                  </button>
+              dprReport ? (
+                <DprReportView
+                  dpr={dprReport}
+                  onNavigateTab={(tab) => setActiveTab(tab as any)}
+                />
+              ) : (
+                <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-stone-500">
+                  Select an enterprise to generate the 25-section Detailed Project Report.
                 </div>
-
-                <div className="space-y-4 text-xs text-stone-700 leading-relaxed font-mono bg-stone-50 p-5 rounded-xl border border-stone-200">
-                  <div className="font-bold text-stone-900 text-sm">CHAPTER 1: EXECUTIVE SUMMARY</div>
-                  <p>
-                    Proposed enterprise: {selectedEnterprise.name}. Location: {district}, {state}.
-                    Estimated Total Project Outlay: ₹{financialPlan.totalProjectCost.toLocaleString('en-IN')}.
-                    Promoter Contribution ({financialPlan.promoterContributionPercent}%): ₹{financialPlan.promoterContribution.toLocaleString('en-IN')}.
-                    Bank Term Loan Proposed: ₹{financialPlan.bankTermLoanRequired.toLocaleString('en-IN')}.
-                    Subsidy Under PMEGP/PMFME: ₹{financialPlan.eligibleSubsidyEstimate.toLocaleString('en-IN')}.
-                  </p>
-
-                  <div className="font-bold text-stone-900 text-sm pt-2">CHAPTER 2: PROJECTED FINANCIAL RATIOS</div>
-                  <p>
-                    • Debt Service Coverage Ratio (DSCR): {financialPlan.debtServiceCoverageRatio !== null ? `${financialPlan.debtServiceCoverageRatio.toFixed(2)}x` : 'No debt service'}
-                    <br />• Break-Even Point (Capacity Utilization): {financialPlan.breakEvenSalesPercent !== null ? `${financialPlan.breakEvenSalesPercent.toFixed(1)}%` : 'N/A'}
-                    <br />• Annual Gross Receipts (Year 1): ₹{financialPlan.annualTurnoverYear1.toLocaleString('en-IN')}
-                    <br />• Net Profit After Tax (PAT Year 1): ₹{financialPlan.profitAfterTax.toLocaleString('en-IN')}
-                    <br />• Capital Payback Period: {financialPlan.paybackPeriodYears} Years
-                  </p>
-                </div>
-              </div>
+              )
             )}
 
             {/* 9. ACTION PLAN */}

@@ -3,6 +3,7 @@ import { EnterpriseIdea, DiscoveryResult } from '../types/business.ts';
 import { DistrictIntelligence } from '../types/location.ts';
 import { AgriLocationAnalysis } from '../types/agriLocation.ts';
 import { FinancialPlan, FinancialScenarioType } from '../types/financial.ts';
+import { SchemeMatch } from '../types/scheme.ts';
 import { apiClient } from '../services/apiClient.ts';
 import { POPULAR_INDIAN_STATES } from '../data/locationBenchmarksData.ts';
 
@@ -26,6 +27,7 @@ export function useBusinessAnalysis() {
   const [agriLocationAnalysis, setAgriLocationAnalysis] = useState<AgriLocationAnalysis | null>(null);
   const [financialPlan, setFinancialPlan] = useState<FinancialPlan | null>(null);
   const [matchedLoans, setMatchedLoans] = useState<any[]>([]);
+  const [matchedSchemes, setMatchedSchemes] = useState<SchemeMatch[]>([]);
 
   // Helper to recompute financial plan when parameters change
   const recomputePlan = useCallback(async (
@@ -35,17 +37,18 @@ export function useBusinessAnalysis() {
     scaleUnits?: number
   ) => {
     try {
-      const [finResult, districtIntel, agriAnalysis] = await Promise.all([
-        apiClient.calculateFinancialPlan({
-          enterpriseId: enterprise.id,
-          capitalAvailable: capital,
-          promoterCategory,
-          locationType: locationType === 'urban' ? 'urban' : 'rural',
-          state,
-          district,
-          scenario: currentScenario,
-          customScaleUnits: scaleUnits
-        }),
+      const finResult = await apiClient.calculateFinancialPlan({
+        enterpriseId: enterprise.id,
+        capitalAvailable: capital,
+        promoterCategory,
+        locationType: locationType === 'urban' ? 'urban' : 'rural',
+        state,
+        district,
+        scenario: currentScenario,
+        customScaleUnits: scaleUnits
+      });
+
+      const [districtIntel, agriAnalysis, loans, schemeResult] = await Promise.all([
         apiClient.getDistrictData(state, district),
         apiClient.getAgriLocationAnalysis({
           businessId: enterprise.id,
@@ -54,14 +57,35 @@ export function useBusinessAnalysis() {
           subDistrictOrBlock,
           villageOrTown,
           locationType
+        }).catch(() => null),
+        apiClient.matchLoans(finResult.plan.bankTermLoanRequired, promoterCategory === 'special').catch(() => []),
+        apiClient.matchSchemes({
+          businessId: enterprise.id,
+          projectCost: finResult.plan.totalProjectCost,
+          availableCapital: capital,
+          financingGap: finResult.plan.bankTermLoanRequired,
+          location: {
+            state,
+            district,
+            ruralUrban: locationType === 'urban' ? 'urban' : 'rural'
+          },
+          entrepreneurProfile: {
+            socialCategory: promoterCategory === 'special' ? 'sc' : 'general',
+            isRuralEntrepreneur: locationType === 'rural',
+            isNewBusiness: true
+          }
         }).catch(() => null)
       ]);
+
       setFinancialPlan(finResult.plan);
       setDistrictData(districtIntel);
       setAgriLocationAnalysis(agriAnalysis);
-
-      const loans = await apiClient.matchLoans(finResult.plan.bankTermLoanRequired, promoterCategory === 'special');
-      setMatchedLoans(loans);
+      setMatchedLoans(loans || []);
+      if (schemeResult?.matches) {
+        setMatchedSchemes(schemeResult.matches);
+      } else {
+        setMatchedSchemes([]);
+      }
     } catch (err: any) {
       console.warn('Could not compute financial plan:', err);
     }
@@ -156,6 +180,7 @@ export function useBusinessAnalysis() {
     agriLocationAnalysis,
     financialPlan,
     matchedLoans,
+    matchedSchemes,
     refreshAnalysis: runDiscovery
   };
 }

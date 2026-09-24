@@ -14,9 +14,33 @@
 import crypto from 'crypto';
 import { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../../src/types/businessPlan.ts';
 import { assembleBusinessPlan, AssembleBusinessPlanParams } from '../../src/utils/businessPlanGenerator.ts';
+import { DetailedProjectReport } from '../../src/types/dpr.ts';
+import { generateDetailedProjectReport, GenerateDprParams } from '../../src/utils/dprGenerator.ts';
+import { generateDprHtml, generateDprText } from '../../src/utils/exportDpr.ts';
 
 export class BusinessPlanService {
   private savedPlans: Map<string, SavedBusinessPlanRecord> = new Map();
+
+  /**
+   * Generates a 25-section Detailed Project Report (DPR) adhering strictly to Phase 4 financial metrics.
+   */
+  public generateDpr(params: GenerateDprParams): DetailedProjectReport {
+    return generateDetailedProjectReport(params);
+  }
+
+  /**
+   * Exports DPR as standalone printable HTML.
+   */
+  public exportDprAsHtml(dpr: DetailedProjectReport): string {
+    return generateDprHtml(dpr);
+  }
+
+  /**
+   * Exports DPR as structured text.
+   */
+  public exportDprAsText(dpr: DetailedProjectReport): string {
+    return generateDprText(dpr);
+  }
 
   /**
    * Assembles a consolidated BusinessPlan from Phase 3-8 parameters.

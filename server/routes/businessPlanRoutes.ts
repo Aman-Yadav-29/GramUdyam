@@ -11,10 +11,16 @@ import {
   createShareHandler,
   revokeShareHandler,
   getSharedPlanHandler,
-  exportPlanHandler
+  exportPlanHandler,
+  generateDprHandler,
+  exportDprHandler
 } from '../controllers/businessPlanController.ts';
 
 const router = Router();
+
+// DPR (Detailed Project Report - 25 Chapters)
+router.post('/generate-dpr', generateDprHandler);
+router.post('/dpr/export', exportDprHandler);
 
 // Generation & Persistence
 router.post('/generate', generatePlanHandler);

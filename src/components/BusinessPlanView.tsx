@@ -222,6 +222,17 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
 
             {onNavigateTab && (
               <button
+                onClick={() => onNavigateTab('dpr')}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer shadow-2xs"
+                title="View Complete 25-Section Detailed Project Report"
+              >
+                <FileText className="h-4 w-4 text-emerald-800" />
+                <span>25-Section DPR</span>
+              </button>
+            )}
+
+            {onNavigateTab && (
+              <button
                 onClick={() => onNavigateTab('loans')}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer shadow-2xs"
                 title="View Bank Credit Appraisal & Lending Feasibility Dossier"

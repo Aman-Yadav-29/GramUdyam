@@ -380,3 +380,74 @@ export function exportPlanHandler(req: Request, res: Response) {
   }
 }
 
+/**
+ * Generates a 25-section Detailed Project Report (DPR).
+ */
+export function generateDprHandler(req: Request, res: Response) {
+  try {
+    const payload = req.body;
+    if (!payload || !payload.enterprise || !payload.financialPlan) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required payload: enterprise and financialPlan must be provided.'
+      });
+    }
+
+    const dpr = businessPlanService.generateDpr({
+      enterprise: payload.enterprise,
+      financialPlan: payload.financialPlan,
+      capex: payload.capex,
+      opex: payload.opex,
+      availableCapital: Number(payload.availableCapital) || 0,
+      location: payload.location || {
+        state: 'Uttar Pradesh',
+        district: 'Varanasi',
+        locationType: 'rural'
+      },
+      promoterProfile: payload.promoterProfile,
+      districtData: payload.districtData,
+      agriLocationAnalysis: payload.agriLocationAnalysis,
+      schemeMatches: payload.schemeMatches || [],
+      matchedLoans: payload.matchedLoans || [],
+      documentReadiness: payload.documentReadiness,
+      customScaleLabel: payload.customScaleLabel,
+      reportId: payload.reportId
+    });
+
+    return res.status(200).json({
+      success: true,
+      dpr
+    });
+  } catch (err: any) {
+    return res.status(400).json({
+      success: false,
+      error: err.message || 'Failed to generate Detailed Project Report (DPR).'
+    });
+  }
+}
+
+/**
+ * Direct export handler for DPR payload.
+ */
+export function exportDprHandler(req: Request, res: Response) {
+  try {
+    const { dpr, format } = req.body;
+    if (!dpr || !dpr.sections) {
+      return res.status(400).send('Invalid request: Valid DPR payload required.');
+    }
+
+    if (format === 'html') {
+      const html = businessPlanService.exportDprAsHtml(dpr);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(html);
+    } else {
+      const text = businessPlanService.exportDprAsText(dpr);
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.send(text);
+    }
+  } catch (err: any) {
+    return res.status(400).send(err.message || 'Failed to export DPR.');
+  }
+}
+
+

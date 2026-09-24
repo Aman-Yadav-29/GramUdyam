@@ -14,6 +14,7 @@ const apiRouter = Router();
 // Core sub-routers
 apiRouter.use('/business', businessRoutes);
 apiRouter.use('/business-plans', businessPlanRoutes);
+apiRouter.use('/business-plan', businessPlanRoutes);
 apiRouter.use('/financial', financialRoutes);
 apiRouter.use('/schemes', schemeRoutes);
 apiRouter.use('/loans', loanRoutes);
