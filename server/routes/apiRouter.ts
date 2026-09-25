@@ -7,6 +7,8 @@ import loanRoutes from './loanRoutes.ts';
 import gisRoutes from './gisRoutes.ts';
 import authRoutes from './authRoutes.ts';
 import systemRoutes from './systemRoutes.ts';
+import actionCenterRoutes from './actionCenterRoutes.ts';
+import executionEvidenceRoutes from './executionEvidenceRoutes.ts';
 import { getHealthHandler } from '../controllers/systemController.ts';
 
 const apiRouter = Router();
@@ -15,6 +17,8 @@ const apiRouter = Router();
 apiRouter.use('/business', businessRoutes);
 apiRouter.use('/business-plans', businessPlanRoutes);
 apiRouter.use('/business-plan', businessPlanRoutes);
+apiRouter.use('/action-center', actionCenterRoutes);
+apiRouter.use('/execution-evidence', executionEvidenceRoutes);
 apiRouter.use('/financial', financialRoutes);
 apiRouter.use('/schemes', schemeRoutes);
 apiRouter.use('/loans', loanRoutes);

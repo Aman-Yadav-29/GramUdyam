@@ -27,7 +27,8 @@ import {
   Info,
   Share2,
   Download,
-  ChevronRight
+  ChevronRight,
+  CheckSquare
 } from 'lucide-react';
 
 import { BusinessPlan, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
@@ -239,6 +240,17 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
               >
                 <Landmark className="h-4 w-4 text-emerald-800" />
                 <span>Bank Appraisal</span>
+              </button>
+            )}
+
+            {onNavigateTab && (
+              <button
+                onClick={() => onNavigateTab('roadmap')}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer shadow-2xs"
+                title="View Action Center & Execution Monitoring"
+              >
+                <CheckSquare className="h-4 w-4 text-emerald-800" />
+                <span>Action Center</span>
               </button>
             )}
 

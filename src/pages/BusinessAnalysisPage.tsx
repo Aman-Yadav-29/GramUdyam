@@ -34,7 +34,8 @@ import {
   Sliders,
   AlertTriangle,
   Sprout,
-  FolderKanban
+  FolderKanban,
+  CheckSquare
 } from 'lucide-react';
 import { useBusinessAnalysis } from '../hooks/useBusinessAnalysis.ts';
 import { useAuth } from '../hooks/useAuth.ts';
@@ -57,6 +58,7 @@ import { BankAppraisalCard } from '../components/BankAppraisalCard.tsx';
 import { generateBankAppraisalDossier } from '../utils/bankAppraisalEngine.ts';
 import { DprReportView } from '../components/DprReportView.tsx';
 import { generateDetailedProjectReport } from '../utils/dprGenerator.ts';
+import { ActionCenterView } from '../components/ActionCenterView.tsx';
 
 interface BusinessAnalysisPageProps {
   onBackToHome: () => void;
@@ -707,13 +709,14 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('roadmap')}
-              className={`pb-2.5 border-b-2 cursor-pointer transition ${
+              className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
                 activeTab === 'roadmap'
-                  ? 'border-emerald-600 text-emerald-800'
+                  ? 'border-emerald-600 text-emerald-800 font-bold'
                   : 'border-transparent text-stone-500 hover:text-stone-800'
               }`}
             >
-              Action Plan
+              <CheckSquare className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Action Center &amp; Monitoring</span>
             </button>
           </nav>
         </div>
@@ -1487,38 +1490,26 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               )
             )}
 
-            {/* 9. ACTION PLAN */}
+            {/* 9. ACTION CENTER & MONITORING */}
             {activeTab === 'roadmap' && (
-              <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-6">
-                <h3 className="font-heading text-lg font-bold text-stone-900">
-                  Action Plan & Next Steps
-                </h3>
-                <div className="space-y-4 text-xs">
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white text-xs font-bold">1</span>
-                    <div>
-                      <div className="font-bold text-stone-900">Zero-Fee Udyam Registration</div>
-                      <div className="text-stone-600 mt-0.5">Visit udyamregistration.gov.in and register using Aadhaar.</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white text-xs font-bold">2</span>
-                    <div>
-                      <div className="font-bold text-stone-900">Procure Machinery Quotations</div>
-                      <div className="text-stone-600 mt-0.5">Collect 2-3 competitive proforma invoices for {selectedEnterprise.keyMachinery?.[0] || 'core processing plant machinery'}.</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white text-xs font-bold">3</span>
-                    <div>
-                      <div className="font-bold text-stone-900">Submit Application on KVIC / PMEGP Portal</div>
-                      <div className="text-stone-600 mt-0.5">Upload DPR and select {districtData?.districtIndustryCenterAddress || 'Local DIC'} as implementing agency.</div>
-                    </div>
-                  </div>
+              selectedEnterprise ? (
+                <ActionCenterView
+                  planId={openedPlan?.id || `plan_${selectedEnterprise.id}_${capitalAvailable}`}
+                  planTitle={openedPlan ? `${openedPlan.business.businessName} Plan` : `${selectedEnterprise.name} Business Plan`}
+                  enterprise={selectedEnterprise}
+                  financialPlan={financialPlan}
+                  location={{ state, district, locationType }}
+                  districtData={districtData}
+                  agriAnalysis={agriLocationAnalysis as any}
+                  matchedSchemes={matchedSchemes as any}
+                  isGuest={isGuest}
+                  onNavigateTab={(tab) => setActiveTab(tab as any)}
+                />
+              ) : (
+                <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-stone-500">
+                  Select an enterprise to view Action Center &amp; Execution Monitoring.
                 </div>
-              </div>
+              )
             )}
           </div>
         ) : (
