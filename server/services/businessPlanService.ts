@@ -12,10 +12,12 @@
  */
 
 import crypto from 'crypto';
-import { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../../src/types/businessPlan.ts';
-import { assembleBusinessPlan, AssembleBusinessPlanParams } from '../../src/utils/businessPlanGenerator.ts';
-import { DetailedProjectReport } from '../../src/types/dpr.ts';
-import { generateDetailedProjectReport, GenerateDprParams } from '../../src/utils/dprGenerator.ts';
+import type { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../../src/types/businessPlan.ts';
+import { assembleBusinessPlan } from '../../src/utils/businessPlanGenerator.ts';
+import type { AssembleBusinessPlanParams } from '../../src/utils/businessPlanGenerator.ts';
+import type { DetailedProjectReport } from '../../src/types/dpr.ts';
+import { generateDetailedProjectReport } from '../../src/utils/dprGenerator.ts';
+import type { GenerateDprParams } from '../../src/utils/dprGenerator.ts';
 import { generateDprHtml, generateDprText } from '../../src/utils/exportDpr.ts';
 
 export class BusinessPlanService {

@@ -8,11 +8,11 @@
  * - Clear segregation between source-derived immutable figures and user-editable narrative.
  */
 
-import { FinancialPlan, FinancialScenarioType } from './financial.ts';
-import { SchemeMatch } from './scheme.ts';
-import { AgriLocationAnalysis } from './agriLocation.ts';
-import { DistrictIntelligence } from './location.ts';
-import { SchemeReadinessPlan } from './documentReadiness.ts';
+import type { FinancialPlan, FinancialScenarioType } from './financial.ts';
+import type { SchemeMatch } from './scheme.ts';
+import type { AgriLocationAnalysis } from './agriLocation.ts';
+import type { DistrictIntelligence } from './location.ts';
+import type { SchemeReadinessPlan } from './documentReadiness.ts';
 
 export interface PlanAssumption {
   category: 'financial' | 'location' | 'scheme' | 'operational';

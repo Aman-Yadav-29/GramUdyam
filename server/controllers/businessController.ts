@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { businessService } from '../services/businessService.ts';
 import { validateBusinessDiscoveryQuery } from '../../src/validation/businessValidator.ts';
-import { ApiResponse, ApiErrorResponse } from '../../src/types/api.ts';
-import { DiscoverySortOption } from '../../src/types/business.ts';
+import type { ApiResponse, ApiErrorResponse } from '../../src/types/api.ts';
+import type { DiscoverySortOption } from '../../src/types/business.ts';
 
 export const discoverByBudgetHandler = async (req: Request, res: Response) => {
   try {

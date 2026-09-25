@@ -1,4 +1,4 @@
-import { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
+import type { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
 
 const GUEST_STORAGE_KEY = 'gramudyam_guest_saved_plans_v1';
 
@@ -179,6 +179,7 @@ export function deleteGuestPlan(id: string): boolean {
       window.localStorage.removeItem(`gramudyam_guest_actions_${id}`);
       window.localStorage.removeItem(`gramudyam_guest_evidence_${id}`);
       window.localStorage.removeItem(`gramudyam_guest_timeline_${id}`);
+      window.localStorage.removeItem(`gramudyam_guest_packages_${id}`);
     } catch {
       // ignore
     }
@@ -190,7 +191,7 @@ export function deleteGuestPlan(id: string): boolean {
 // ==========================================
 // Phase 12: Guest Action Center Persistence
 // ==========================================
-import { BusinessPlanAction } from '../types/actionCenter.ts';
+import type { BusinessPlanAction } from '../types/actionCenter.ts';
 
 const GUEST_ACTIONS_PREFIX = 'gramudyam_guest_actions_';
 
@@ -283,12 +284,8 @@ export function deleteGuestPlanAction(planId: string, actionId: string): boolean
 // ==========================================
 // Phase 13: Guest Execution Evidence Persistence
 // ==========================================
-import {
-  ExecutionEvidence,
-  CreateEvidenceInput,
-  UpdateEvidenceInput,
-  EVIDENCE_USER_DISCLAIMER
-} from '../types/executionEvidence.ts';
+import { EVIDENCE_USER_DISCLAIMER } from '../types/executionEvidence.ts';
+import type { ExecutionEvidence, CreateEvidenceInput, UpdateEvidenceInput } from '../types/executionEvidence.ts';
 
 const GUEST_EVIDENCE_PREFIX = 'gramudyam_guest_evidence_';
 
@@ -388,11 +385,7 @@ export function deleteGuestActionEvidence(id: string, planId: string): boolean {
 // ==========================================
 // Phase 14: Guest Timeline Persistence
 // ==========================================
-import {
-  ExecutionTimelineEvent,
-  CreateUserNoteEventInput,
-  UpdateUserNoteEventInput
-} from '../types/executionTimeline.ts';
+import type { ExecutionTimelineEvent, CreateUserNoteEventInput, UpdateUserNoteEventInput } from '../types/executionTimeline.ts';
 
 const GUEST_TIMELINE_PREFIX = 'gramudyam_guest_timeline_';
 
@@ -471,6 +464,83 @@ export function deleteGuestTimelineEvent(eventId: string, planId: string): boole
   if (filtered.length === events.length) return false;
 
   saveGuestTimelineEvents(planId, filtered);
+  return true;
+}
+
+// ==========================================
+// Phase 15: Guest Submission Package Persistence
+// ==========================================
+import type { SubmissionPackage, SubmissionPackageUserInputs } from '../types/submissionPackage.ts';
+
+const GUEST_PACKAGES_PREFIX = 'gramudyam_guest_packages_';
+
+export function getGuestSubmissionPackages(planId: string): SubmissionPackage[] {
+  if (!isStorageAvailable() || !planId) return [];
+  try {
+    const raw = window.localStorage.getItem(`${GUEST_PACKAGES_PREFIX}${planId}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveGuestSubmissionPackages(planId: string, packages: SubmissionPackage[]): void {
+  if (!isStorageAvailable() || !planId) return;
+  try {
+    window.localStorage.setItem(`${GUEST_PACKAGES_PREFIX}${planId}`, JSON.stringify(packages));
+  } catch {
+    // quota error
+  }
+}
+
+export function saveGuestSubmissionPackage(planId: string, pkg: SubmissionPackage): void {
+  const packages = getGuestSubmissionPackages(planId);
+  const index = packages.findIndex(p => p.metadata.packageId === pkg.metadata.packageId);
+  if (index >= 0) {
+    packages[index] = pkg;
+  } else {
+    packages.unshift(pkg);
+  }
+  saveGuestSubmissionPackages(planId, packages);
+}
+
+export function updateGuestSubmissionPackageUserInputs(
+  packageId: string,
+  planId: string,
+  inputs: SubmissionPackageUserInputs
+): SubmissionPackage | undefined {
+  const packages = getGuestSubmissionPackages(planId);
+  const index = packages.findIndex(p => p.metadata.packageId === packageId);
+  if (index < 0) return undefined;
+
+  const pkg = packages[index];
+  pkg.userInputs = {
+    ...pkg.userInputs,
+    ...inputs
+  };
+
+  const coverSec = pkg.sections.find(s => s.id === 'sec_cover' || s.id === 'sec_gov_cover');
+  if (coverSec && inputs.coverNote) {
+    coverSec.paragraphs[1] = inputs.coverNote;
+  }
+  const promoterSec = pkg.sections.find(s => s.id === 'sec_promoter_info' || s.id === 'sec_gov_enterprise_profile');
+  if (promoterSec && inputs.applicantStatement) {
+    promoterSec.paragraphs[1] = inputs.applicantStatement;
+  }
+
+  packages[index] = pkg;
+  saveGuestSubmissionPackages(planId, packages);
+  return pkg;
+}
+
+export function deleteGuestSubmissionPackage(packageId: string, planId: string): boolean {
+  const packages = getGuestSubmissionPackages(planId);
+  const filtered = packages.filter(p => p.metadata.packageId !== packageId);
+  if (filtered.length === packages.length) return false;
+
+  saveGuestSubmissionPackages(planId, filtered);
   return true;
 }
 

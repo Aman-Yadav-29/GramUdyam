@@ -1,8 +1,8 @@
-import { EnterpriseIdea } from '../../src/types/business.ts';
-import { GovernmentScheme } from '../../src/types/schemes.ts';
-import { LoanProduct } from '../../src/types/loans.ts';
-import { DistrictIntelligence } from '../../src/types/location.ts';
-import { UserAccount, SavedBusinessPlan } from '../../src/types/auth.ts';
+import type { EnterpriseIdea } from '../../src/types/business.ts';
+import type { GovernmentScheme } from '../../src/types/schemes.ts';
+import type { LoanProduct } from '../../src/types/loans.ts';
+import type { DistrictIntelligence } from '../../src/types/location.ts';
+import type { UserAccount, SavedBusinessPlan } from '../../src/types/auth.ts';
 import { ENTERPRISE_TEMPLATES } from '../../src/data/enterpriseTemplatesData.ts';
 import { GOVERNMENT_SCHEMES } from '../../src/data/schemesData.ts';
 import { LOAN_PRODUCTS } from '../../src/data/loanProductsData.ts';

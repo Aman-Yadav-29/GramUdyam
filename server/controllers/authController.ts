@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { authService, DuplicateAccountError, InvalidCredentialsError } from '../services/authService.ts';
 import { validateLoginPayload, validateRegisterPayload } from '../../src/validation/authValidator.ts';
 

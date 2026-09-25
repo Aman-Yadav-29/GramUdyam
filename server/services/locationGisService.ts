@@ -1,5 +1,5 @@
 import { entityRepository } from '../models/schema.ts';
-import { DistrictIntelligence } from '../../src/types/location.ts';
+import type { DistrictIntelligence } from '../../src/types/location.ts';
 import { POPULAR_INDIAN_STATES, STATE_DISTRICTS_MAP } from '../../src/data/locationBenchmarksData.ts';
 import { generateDistrictFallback } from '../../src/utils/locationIntelligenceEngine.ts';
 

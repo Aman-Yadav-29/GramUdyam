@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { dbManager } from '../models/database.ts';
 import { aiService } from '../services/aiService.ts';
-import { SystemHealthStatus, ApiResponse } from '../../src/types/api.ts';
+import type { SystemHealthStatus, ApiResponse } from '../../src/types/api.ts';
 
 const startTime = Date.now();
 

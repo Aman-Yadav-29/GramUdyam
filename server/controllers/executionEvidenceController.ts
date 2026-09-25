@@ -10,7 +10,7 @@
  * - Defensive error handling (no stack trace exposure).
  */
 
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { executionEvidenceService } from '../services/executionEvidenceService.ts';
 import { authService } from '../services/authService.ts';
 

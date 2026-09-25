@@ -1,5 +1,5 @@
 import { entityRepository } from '../models/schema.ts';
-import { UserAccount, AuthSession } from '../../src/types/auth.ts';
+import type { UserAccount, AuthSession } from '../../src/types/auth.ts';
 import { hashPassword, verifyPassword, createSessionToken, verifySessionToken, invalidateToken } from '../utils/cryptoAuth.ts';
 
 export class DuplicateAccountError extends Error {

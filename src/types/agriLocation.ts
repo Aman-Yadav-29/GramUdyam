@@ -1,4 +1,4 @@
-import { GeographicResolution } from './location.ts';
+import type { GeographicResolution } from './location.ts';
 
 export type AgriFactorStatus = 'supportive' | 'mixed' | 'concern' | 'unknown';
 

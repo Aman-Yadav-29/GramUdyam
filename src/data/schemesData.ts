@@ -1,4 +1,4 @@
-import { GovernmentScheme } from '../types/schemes.ts';
+import type { GovernmentScheme } from '../types/schemes.ts';
 
 export const GOVERNMENT_SCHEMES: GovernmentScheme[] = [
   {

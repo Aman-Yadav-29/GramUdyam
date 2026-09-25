@@ -1,7 +1,4 @@
-import {
-  BankAppraisalDossier,
-  BankAppraisalRequest
-} from '../../src/types/bankAppraisal.ts';
+import type { BankAppraisalDossier, BankAppraisalRequest } from '../../src/types/bankAppraisal.ts';
 import {
   generateBankAppraisalDossier,
   generateBankDossierPlainText,

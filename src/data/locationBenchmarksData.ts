@@ -1,4 +1,4 @@
-import { DistrictIntelligence } from '../types/location.ts';
+import type { DistrictIntelligence } from '../types/location.ts';
 
 export const DISTRICT_BENCHMARKS: DistrictIntelligence[] = [
   {

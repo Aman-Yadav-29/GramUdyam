@@ -1,4 +1,4 @@
-import { EnterpriseIdea } from '../types/business.ts';
+import type { EnterpriseIdea } from '../types/business.ts';
 import { BUSINESS_TEMPLATES } from './businessTemplates.ts';
 
 export const ENTERPRISE_TEMPLATES: EnterpriseIdea[] = BUSINESS_TEMPLATES.map((bt) => {

@@ -10,15 +10,8 @@
  */
 
 import { GOVERNMENT_SCHEMES_DATASET } from '../../src/data/governmentSchemes.ts';
-import { GovernmentScheme, SchemeEligibilityStatus } from '../../src/types/scheme.ts';
-import {
-  DocumentCategory,
-  DocumentRequirement,
-  DocumentReadinessSummary,
-  DprFinancialSummary,
-  SchemeReadinessPlan,
-  UserDocumentDeclaration
-} from '../../src/types/documentReadiness.ts';
+import type { GovernmentScheme, SchemeEligibilityStatus } from '../../src/types/scheme.ts';
+import type { DocumentCategory, DocumentRequirement, DocumentReadinessSummary, DprFinancialSummary, SchemeReadinessPlan, UserDocumentDeclaration } from '../../src/types/documentReadiness.ts';
 
 // In-memory store for user document readiness declarations
 // Key: `${userId || 'guest'}_${schemeId}`

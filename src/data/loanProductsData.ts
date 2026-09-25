@@ -1,4 +1,4 @@
-import { LoanProduct } from '../types/loans.ts';
+import type { LoanProduct } from '../types/loans.ts';
 
 export const LOAN_PRODUCTS: LoanProduct[] = [
   {

@@ -9,7 +9,7 @@
  * - Defensive error handling (no stack trace exposure).
  */
 
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { executionTimelineService } from '../services/executionTimelineService.ts';
 import { authService } from '../services/authService.ts';
 import { generateTimelineExportText } from '../../src/utils/timelineEngine.ts';

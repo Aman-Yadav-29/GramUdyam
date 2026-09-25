@@ -1,4 +1,4 @@
-import { BusinessPlan } from './businessPlan.ts';
+import type { BusinessPlan } from './businessPlan.ts';
 
 export type PlanStatus = 'active' | 'archived';
 export type PlanOwnerType = 'authenticated' | 'guest';

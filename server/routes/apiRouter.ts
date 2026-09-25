@@ -10,6 +10,7 @@ import systemRoutes from './systemRoutes.ts';
 import actionCenterRoutes from './actionCenterRoutes.ts';
 import executionEvidenceRoutes from './executionEvidenceRoutes.ts';
 import executionTimelineRoutes from './executionTimelineRoutes.ts';
+import submissionPackageRoutes from './submissionPackageRoutes.ts';
 import { getHealthHandler } from '../controllers/systemController.ts';
 
 const apiRouter = Router();
@@ -21,6 +22,7 @@ apiRouter.use('/business-plan', businessPlanRoutes);
 apiRouter.use('/action-center', actionCenterRoutes);
 apiRouter.use('/execution-evidence', executionEvidenceRoutes);
 apiRouter.use('/execution-timeline', executionTimelineRoutes);
+apiRouter.use('/submission-packages', submissionPackageRoutes);
 apiRouter.use('/financial', financialRoutes);
 apiRouter.use('/schemes', schemeRoutes);
 apiRouter.use('/loans', loanRoutes);

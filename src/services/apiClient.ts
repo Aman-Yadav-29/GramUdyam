@@ -1,30 +1,19 @@
-import { ApiResponse, SystemHealthStatus } from '../types/api.ts';
-import { 
-  DiscoveryResult, 
-  BusinessDiscoveryQuery, 
-  EnterpriseIdea,
-  BudgetDiscoveryResult,
-  DiscoverySortOption
-} from '../types/business.ts';
-import { FinancialPlan, CapexBreakdown, OpexMonthlyBreakdown } from '../types/financial.ts';
-import { GovernmentScheme, SchemeCalculationResult } from '../types/schemes.ts';
-import { SchemeMatchingInput, SchemeMatchingResult } from '../types/scheme.ts';
-import { SchemeReadinessPlan, UserDocumentDeclaration, SaveReadinessResponse } from '../types/documentReadiness.ts';
-import { LoanProduct } from '../types/loans.ts';
-import { DistrictIntelligence } from '../types/location.ts';
-import { AgriLocationAnalysis } from '../types/agriLocation.ts';
-import { AuthSession, UserAccount } from '../types/auth.ts';
-import { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
-import { BankAppraisalDossier, BankAppraisalRequest } from '../types/bankAppraisal.ts';
-import { BusinessPlanAction } from '../types/actionCenter.ts';
-import { ExecutionEvidence, CreateEvidenceInput, UpdateEvidenceInput } from '../types/executionEvidence.ts';
-import {
-  ExecutionTimelineEvent,
-  ExecutionMilestone,
-  PlanHealthSummary,
-  CreateUserNoteEventInput,
-  UpdateUserNoteEventInput
-} from '../types/executionTimeline.ts';
+import type { ApiResponse, SystemHealthStatus } from '../types/api.ts';
+import type { DiscoveryResult, BusinessDiscoveryQuery, EnterpriseIdea, BudgetDiscoveryResult, DiscoverySortOption } from '../types/business.ts';
+import type { FinancialPlan, CapexBreakdown, OpexMonthlyBreakdown } from '../types/financial.ts';
+import type { GovernmentScheme, SchemeCalculationResult } from '../types/schemes.ts';
+import type { SchemeMatchingInput, SchemeMatchingResult } from '../types/scheme.ts';
+import type { SchemeReadinessPlan, UserDocumentDeclaration, SaveReadinessResponse } from '../types/documentReadiness.ts';
+import type { LoanProduct } from '../types/loans.ts';
+import type { DistrictIntelligence } from '../types/location.ts';
+import type { AgriLocationAnalysis } from '../types/agriLocation.ts';
+import type { AuthSession, UserAccount } from '../types/auth.ts';
+import type { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
+import type { BankAppraisalDossier, BankAppraisalRequest } from '../types/bankAppraisal.ts';
+import type { BusinessPlanAction } from '../types/actionCenter.ts';
+import type { ExecutionEvidence, CreateEvidenceInput, UpdateEvidenceInput } from '../types/executionEvidence.ts';
+import type { ExecutionTimelineEvent, ExecutionMilestone, PlanHealthSummary, CreateUserNoteEventInput, UpdateUserNoteEventInput } from '../types/executionTimeline.ts';
+import type { SubmissionPackage, GenerateSubmissionPackageParams, SubmissionPackageUserInputs } from '../types/submissionPackage.ts';
 
 const SESSION_STORAGE_KEY = 'gramudyam_auth_session';
 
@@ -516,6 +505,76 @@ class ApiClient {
       `/api/execution-timeline/${encodeURIComponent(planId)}/health`
     );
     return res.data;
+  }
+
+  // Phase 15: Submission Package Generator & Dossier Management
+  public async generateSubmissionPackage(params: GenerateSubmissionPackageParams): Promise<SubmissionPackage> {
+    const res = await this.request<{ success: boolean; data: SubmissionPackage }>(
+      '/api/submission-packages/generate',
+      {
+        method: 'POST',
+        body: JSON.stringify(params)
+      }
+    );
+    return res.data;
+  }
+
+  public async getSubmissionPackage(packageId: string): Promise<SubmissionPackage> {
+    const res = await this.request<{ success: boolean; data: SubmissionPackage }>(
+      `/api/submission-packages/${encodeURIComponent(packageId)}`
+    );
+    return res.data;
+  }
+
+  public async getSubmissionPackagesForPlan(planId: string): Promise<SubmissionPackage[]> {
+    const res = await this.request<{ success: boolean; data: SubmissionPackage[] }>(
+      `/api/submission-packages/plan/${encodeURIComponent(planId)}`
+    );
+    return res.data || [];
+  }
+
+  public async updateSubmissionPackageUserInputs(
+    packageId: string,
+    inputs: SubmissionPackageUserInputs
+  ): Promise<SubmissionPackage> {
+    const res = await this.request<{ success: boolean; data: SubmissionPackage }>(
+      `/api/submission-packages/${encodeURIComponent(packageId)}/user-inputs`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(inputs)
+      }
+    );
+    return res.data;
+  }
+
+  public async deleteSubmissionPackage(packageId: string): Promise<boolean> {
+    const res = await this.request<{ success: boolean; data: { deleted: boolean } }>(
+      `/api/submission-packages/${encodeURIComponent(packageId)}`,
+      {
+        method: 'DELETE'
+      }
+    );
+    return res.data?.deleted ?? true;
+  }
+
+  public async exportSubmissionPackageText(packageId: string): Promise<string> {
+    const token = this.getAuthToken();
+    const headers: Record<string, string> = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    const res = await fetch(`/api/submission-packages/${encodeURIComponent(packageId)}/export/text`, { headers });
+    if (!res.ok) throw new Error(`Failed to export package text: HTTP ${res.status}`);
+    return res.text();
+  }
+
+  public async exportSubmissionPackageHtml(packageId: string): Promise<string> {
+    const token = this.getAuthToken();
+    const headers: Record<string, string> = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    const res = await fetch(`/api/submission-packages/${encodeURIComponent(packageId)}/export/html`, { headers });
+    if (!res.ok) throw new Error(`Failed to export package html: HTTP ${res.status}`);
+    return res.text();
   }
 }
 

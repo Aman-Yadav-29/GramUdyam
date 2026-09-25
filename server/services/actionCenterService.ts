@@ -10,11 +10,7 @@
  * - Server-side authorization ensures isolation between users.
  */
 
-import {
-  BusinessPlanAction,
-  ActionCenterSummary,
-  GenerateActionsParams
-} from '../../src/types/actionCenter.ts';
+import type { BusinessPlanAction, ActionCenterSummary, GenerateActionsParams } from '../../src/types/actionCenter.ts';
 import {
   generatePlanActions,
   calculateActionCenterSummary,

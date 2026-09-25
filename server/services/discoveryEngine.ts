@@ -1,11 +1,5 @@
-import { 
-  BusinessTemplate, 
-  CalculatedBusinessPlan, 
-  BudgetDiscoveryResult, 
-  AffordabilityTier, 
-  DiscoverySortOption 
-} from '../../src/types/business.ts';
-import { GisLocationQuery, DistrictIntelligence } from '../../src/types/location.ts';
+import type { BusinessTemplate, CalculatedBusinessPlan, BudgetDiscoveryResult, AffordabilityTier, DiscoverySortOption } from '../../src/types/business.ts';
+import type { GisLocationQuery, DistrictIntelligence } from '../../src/types/location.ts';
 import { BUSINESS_TEMPLATES } from '../../src/data/businessTemplates.ts';
 import { evaluateBusinessScaling } from '../../src/utils/scalingEngine.ts';
 import {

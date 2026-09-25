@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { aiService } from '../services/aiService.ts';
 
 export const getAdvisoryHandler = async (req: Request, res: Response) => {

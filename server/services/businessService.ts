@@ -1,8 +1,9 @@
 import { entityRepository } from '../models/schema.ts';
-import { BusinessDiscoveryQuery, DiscoveryResult, DiscoverySortOption } from '../../src/types/business.ts';
-import { GisLocationQuery } from '../../src/types/location.ts';
+import type { BusinessDiscoveryQuery, DiscoveryResult, DiscoverySortOption } from '../../src/types/business.ts';
+import type { GisLocationQuery } from '../../src/types/location.ts';
 import { formatINRLakhs } from '../../src/utils/formatters.ts';
-import { discoverBusinessesByBudget, DiscoveryConfig } from './discoveryEngine.ts';
+import { discoverBusinessesByBudget } from './discoveryEngine.ts';
+import type { DiscoveryConfig } from './discoveryEngine.ts';
 
 export class BusinessService {
   /**

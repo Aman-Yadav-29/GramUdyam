@@ -10,13 +10,8 @@
  * - Input validation against oversized text, malformed dates, and mass-assignment.
  */
 
-import {
-  ExecutionEvidence,
-  EvidenceType,
-  CreateEvidenceInput,
-  UpdateEvidenceInput,
-  EVIDENCE_USER_DISCLAIMER
-} from '../../src/types/executionEvidence.ts';
+import { EVIDENCE_USER_DISCLAIMER } from '../../src/types/executionEvidence.ts';
+import type { ExecutionEvidence, EvidenceType, CreateEvidenceInput, UpdateEvidenceInput } from '../../src/types/executionEvidence.ts';
 import { actionCenterService } from './actionCenterService.ts';
 
 const VALID_EVIDENCE_TYPES: Set<EvidenceType> = new Set([

@@ -9,14 +9,8 @@
  * - Zero financial or scoring recalculation.
  */
 
-import {
-  ExecutionTimelineEvent,
-  ExecutionMilestone,
-  PlanHealthSummary,
-  CreateUserNoteEventInput,
-  UpdateUserNoteEventInput,
-  TIMELINE_DISCLAIMER
-} from '../../src/types/executionTimeline.ts';
+import { TIMELINE_DISCLAIMER } from '../../src/types/executionTimeline.ts';
+import type { ExecutionTimelineEvent, ExecutionMilestone, PlanHealthSummary, CreateUserNoteEventInput, UpdateUserNoteEventInput } from '../../src/types/executionTimeline.ts';
 import { actionCenterService } from './actionCenterService.ts';
 import { executionEvidenceService } from './executionEvidenceService.ts';
 import {

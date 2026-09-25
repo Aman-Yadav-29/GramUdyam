@@ -1,16 +1,6 @@
-import { DistrictIntelligence, GeographicResolution } from '../../src/types/location.ts';
-import { BusinessTemplate } from '../../src/types/business.ts';
-import {
-  AgriLocationAnalysis,
-  AgriBusinessKind,
-  AgriFactorType,
-  AgriFactorStatus,
-  AgriDataLevel,
-  AgriFactorEvaluation,
-  AgriLocalVerificationItem,
-  AgriEvidenceItem,
-  AgriVerificationPriority
-} from '../../src/types/agriLocation.ts';
+import type { DistrictIntelligence, GeographicResolution } from '../../src/types/location.ts';
+import type { BusinessTemplate } from '../../src/types/business.ts';
+import type { AgriLocationAnalysis, AgriBusinessKind, AgriFactorType, AgriFactorStatus, AgriDataLevel, AgriFactorEvaluation, AgriLocalVerificationItem, AgriEvidenceItem, AgriVerificationPriority } from '../../src/types/agriLocation.ts';
 import { locationGisService } from './locationGisService.ts';
 
 /**

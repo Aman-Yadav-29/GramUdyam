@@ -8,7 +8,7 @@
  * - Counts only, no approval probability or composite scores.
  */
 
-import { SchemeEligibilityStatus } from './scheme.ts';
+import type { SchemeEligibilityStatus } from './scheme.ts';
 
 export type DocumentStatus =
   | 'required'

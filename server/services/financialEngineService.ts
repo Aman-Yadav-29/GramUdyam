@@ -1,5 +1,5 @@
 import { entityRepository } from '../models/schema.ts';
-import { FinancialPlan, CapexBreakdown, OpexMonthlyBreakdown, FinancialScenarioType } from '../../src/types/financial.ts';
+import type { FinancialPlan, CapexBreakdown, OpexMonthlyBreakdown, FinancialScenarioType } from '../../src/types/financial.ts';
 import { 
   calculateDeterministicFinancialPlan, 
   deriveCapexBreakdown, 

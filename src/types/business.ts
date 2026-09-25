@@ -1,6 +1,6 @@
-import { ScalingRecommendation, MultiScenarioProjections } from './financial.ts';
-import { LocationFitAssessment, GisLocationQuery } from './location.ts';
-import { AgriLocationAnalysis } from './agriLocation.ts';
+import type { ScalingRecommendation, MultiScenarioProjections } from './financial.ts';
+import type { LocationFitAssessment, GisLocationQuery } from './location.ts';
+import type { AgriLocationAnalysis } from './agriLocation.ts';
 
 export type IndustryCategory = 
   | 'agro_processing'

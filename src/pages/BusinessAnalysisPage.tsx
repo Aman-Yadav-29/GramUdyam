@@ -50,9 +50,9 @@ import { SavedPlansWorkspace } from '../components/SavedPlansWorkspace.tsx';
 import { assembleBusinessPlan } from '../utils/businessPlanGenerator.ts';
 import { ENTERPRISE_TEMPLATES } from '../data/enterpriseTemplatesData.ts';
 import { apiClient } from '../services/apiClient.ts';
-import { CalculatedBusinessPlan } from '../types/business.ts';
-import { FinancialScenarioType } from '../types/financial.ts';
-import { BusinessPlan } from '../types/businessPlan.ts';
+import type { CalculatedBusinessPlan } from '../types/business.ts';
+import type { FinancialScenarioType } from '../types/financial.ts';
+import type { BusinessPlan } from '../types/businessPlan.ts';
 import { saveGuestPlan, updateGuestPlanNarrative } from '../utils/guestStorage.ts';
 import { BankAppraisalCard } from '../components/BankAppraisalCard.tsx';
 import { generateBankAppraisalDossier } from '../utils/bankAppraisalEngine.ts';
@@ -60,6 +60,7 @@ import { DprReportView } from '../components/DprReportView.tsx';
 import { generateDetailedProjectReport } from '../utils/dprGenerator.ts';
 import { ActionCenterView } from '../components/ActionCenterView.tsx';
 import { ExecutionTimelineView } from '../components/ExecutionTimelineView.tsx';
+import { SubmissionPackageView } from '../components/SubmissionPackageView.tsx';
 
 interface BusinessAnalysisPageProps {
   onBackToHome: () => void;
@@ -104,7 +105,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
   const { user, isGuest, isAuthenticated, logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState<
-    'discovery' | 'plan' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap' | 'timeline' | 'workspace'
+    'discovery' | 'plan' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap' | 'timeline' | 'submission' | 'workspace'
   >('discovery');
 
   const [openedPlan, setOpenedPlan] = useState<BusinessPlan | null>(null);
@@ -729,6 +730,17 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
             >
               <Clock className="h-3.5 w-3.5 text-emerald-600" />
               <span>Execution Timeline &amp; Health</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('submission')}
+              className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
+                activeTab === 'submission'
+                  ? 'border-emerald-600 text-emerald-800 font-bold'
+                  : 'border-transparent text-emerald-700 hover:text-emerald-900'
+              }`}
+            >
+              <FileText className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Submission Package (Bank &amp; Govt)</span>
             </button>
           </nav>
         </div>
@@ -1536,6 +1548,40 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               ) : (
                 <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-stone-500">
                   Select an enterprise to view Execution Timeline &amp; Health Monitoring.
+                </div>
+              )
+            )}
+
+            {/* 11. SUBMISSION PACKAGE (PHASE 15: BANK & GOVERNMENT DOSSIER) */}
+            {activeTab === 'submission' && (
+              selectedEnterprise ? (
+                <SubmissionPackageView
+                  planId={openedPlan?.id || `plan_${selectedEnterprise.id}_${capitalAvailable}`}
+                  planTitle={openedPlan ? `${openedPlan.business.businessName} Plan` : `${selectedEnterprise.name} Business Plan`}
+                  business={selectedEnterprise}
+                  promoterProfile={{
+                    name: user?.fullName || (isGuest ? 'Guest Entrepreneur' : 'Promoter / Entrepreneur'),
+                    socialCategory: promoterCategory === 'special' ? 'Special Category (SC/ST/Woman/OBC)' : 'General Category',
+                    isRural: locationType === 'rural'
+                  }}
+                  location={{
+                    state,
+                    district,
+                    subDistrictOrBlock,
+                    villageOrTown,
+                    locationType
+                  }}
+                  financialPlan={financialPlan}
+                  districtData={districtData}
+                  agriLocationAnalysis={agriLocationAnalysis as any}
+                  matchedSchemes={matchedSchemes as any}
+                  dpr={dprReport}
+                  isGuest={isGuest}
+                  onNavigateTab={(tab) => setActiveTab(tab as any)}
+                />
+              ) : (
+                <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-stone-500">
+                  Select an enterprise to generate Bank &amp; Government Submission Packages.
                 </div>
               )
             )}

@@ -1,5 +1,5 @@
 import { entityRepository } from '../models/schema.ts';
-import { SchemeCalculationRequest, SchemeCalculationResult, GovernmentScheme } from '../../src/types/schemes.ts';
+import type { SchemeCalculationRequest, SchemeCalculationResult, GovernmentScheme } from '../../src/types/schemes.ts';
 
 export class SchemeEngineService {
   public getAllSchemes(): GovernmentScheme[] {

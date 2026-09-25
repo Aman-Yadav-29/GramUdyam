@@ -1,5 +1,5 @@
 import { entityRepository } from '../models/schema.ts';
-import { LoanProduct } from '../../src/types/loans.ts';
+import type { LoanProduct } from '../../src/types/loans.ts';
 import { calculateEmi } from '../../src/utils/financialEngine.ts';
 
 export class LoanEngineService {

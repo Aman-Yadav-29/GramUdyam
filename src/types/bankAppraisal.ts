@@ -1,4 +1,4 @@
-import { LoanProduct } from './loans.ts';
+import type { LoanProduct } from './loans.ts';
 
 export type DscrComfortBand = 'comfortable' | 'marginal' | 'high_risk' | 'no_debt';
 

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { financialEngineService } from '../services/financialEngineService.ts';
 
 export const calculateFinancialPlanHandler = async (req: Request, res: Response) => {

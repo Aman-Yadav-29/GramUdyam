@@ -1,4 +1,4 @@
-import { BusinessTemplate } from '../types/business.ts';
+import type { BusinessTemplate } from '../types/business.ts';
 
 export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
   // 1. Vermicompost & Bio-Enriched Organic Fertilizer Unit (Project Cost ~₹48,000)

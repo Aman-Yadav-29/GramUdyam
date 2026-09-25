@@ -1,4 +1,4 @@
-import { AffordabilityTier } from './business.ts';
+import type { AffordabilityTier } from './business.ts';
 
 export interface CapexBreakdown {
   landAndSiteDevelopment: number;

@@ -10,7 +10,7 @@
  * - Guest mode fully supported.
  */
 
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { businessPlanService } from '../services/businessPlanService.ts';
 import { authService } from '../services/authService.ts';
 

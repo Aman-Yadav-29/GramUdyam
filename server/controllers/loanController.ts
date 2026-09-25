@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { loanEngineService } from '../services/loanEngineService.ts';
 import { bankAppraisalService } from '../services/bankAppraisalService.ts';
-import { BankAppraisalRequest } from '../../src/types/bankAppraisal.ts';
+import type { BankAppraisalRequest } from '../../src/types/bankAppraisal.ts';
 
 export const getAllLoansHandler = async (_req: Request, res: Response) => {
   try {
