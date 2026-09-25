@@ -168,20 +168,23 @@ export function updateGuestPlanTitle(
 export function deleteGuestPlan(id: string): boolean {
   const plans = getGuestSavedPlans();
   const filtered = plans.filter((p) => p.id !== id);
-  if (filtered.length === plans.length) return false;
+  const planExisted = filtered.length !== plans.length;
 
   if (isStorageAvailable()) {
     try {
-      window.localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(filtered));
-      // Also clean up any associated actions and evidence for this deleted plan
+      if (planExisted) {
+        window.localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(filtered));
+      }
+      // Also clean up any associated actions, evidence, and timeline for this deleted plan
       window.localStorage.removeItem(`gramudyam_guest_actions_${id}`);
       window.localStorage.removeItem(`gramudyam_guest_evidence_${id}`);
+      window.localStorage.removeItem(`gramudyam_guest_timeline_${id}`);
     } catch {
       // ignore
     }
   }
 
-  return true;
+  return planExisted || true;
 }
 
 // ==========================================
@@ -381,5 +384,95 @@ export function deleteGuestActionEvidence(id: string, planId: string): boolean {
   saveGuestPlanEvidence(planId, filtered);
   return true;
 }
+
+// ==========================================
+// Phase 14: Guest Timeline Persistence
+// ==========================================
+import {
+  ExecutionTimelineEvent,
+  CreateUserNoteEventInput,
+  UpdateUserNoteEventInput
+} from '../types/executionTimeline.ts';
+
+const GUEST_TIMELINE_PREFIX = 'gramudyam_guest_timeline_';
+
+export function getGuestTimelineEvents(planId: string): ExecutionTimelineEvent[] {
+  if (!isStorageAvailable() || !planId) return [];
+  try {
+    const raw = window.localStorage.getItem(`${GUEST_TIMELINE_PREFIX}${planId}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+export function saveGuestTimelineEvents(planId: string, events: ExecutionTimelineEvent[]): void {
+  if (!isStorageAvailable() || !planId) return;
+  try {
+    window.localStorage.setItem(`${GUEST_TIMELINE_PREFIX}${planId}`, JSON.stringify(events));
+  } catch {
+    // quota or storage error
+  }
+}
+
+export function addGuestTimelineEvent(input: CreateUserNoteEventInput): ExecutionTimelineEvent {
+  const events = getGuestTimelineEvents(input.planId);
+  const now = new Date().toISOString();
+  const id = `${input.planId}_tle_${Date.now()}_${events.length + 1}`;
+
+  const newEvent: ExecutionTimelineEvent = {
+    id,
+    planId: input.planId,
+    actionId: input.actionId,
+    eventType: 'user_note',
+    title: input.title.trim().substring(0, 160),
+    description: input.description.trim().substring(0, 2000),
+    eventDate: input.eventDate?.trim() || undefined,
+    recordedAt: now,
+    source: 'user_manual',
+    sourcePhase: 'phase_14',
+    verificationStatus: 'user_recorded',
+    userCreated: true
+  };
+
+  events.unshift(newEvent);
+  saveGuestTimelineEvents(input.planId, events);
+  return newEvent;
+}
+
+export function updateGuestTimelineEvent(
+  eventId: string,
+  planId: string,
+  updates: UpdateUserNoteEventInput
+): ExecutionTimelineEvent | undefined {
+  const events = getGuestTimelineEvents(planId);
+  const index = events.findIndex((e) => e.id === eventId);
+  if (index < 0) return undefined;
+
+  const existing = events[index];
+  const updated: ExecutionTimelineEvent = {
+    ...existing,
+    title: updates.title !== undefined ? updates.title.trim().substring(0, 160) : existing.title,
+    description: updates.description !== undefined ? updates.description.trim().substring(0, 2000) : existing.description,
+    eventDate: updates.eventDate !== undefined ? (updates.eventDate.trim() || undefined) : existing.eventDate
+  };
+
+  events[index] = updated;
+  saveGuestTimelineEvents(planId, events);
+  return updated;
+}
+
+export function deleteGuestTimelineEvent(eventId: string, planId: string): boolean {
+  const events = getGuestTimelineEvents(planId);
+  const filtered = events.filter((e) => e.id !== eventId);
+  if (filtered.length === events.length) return false;
+
+  saveGuestTimelineEvents(planId, filtered);
+  return true;
+}
+
 
 

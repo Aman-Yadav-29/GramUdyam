@@ -67,6 +67,7 @@ import {
   EVIDENCE_TYPE_DESCRIPTIONS,
   EVIDENCE_USER_DISCLAIMER
 } from '../types/executionEvidence.ts';
+import { apiClient } from '../services/apiClient.ts';
 
 interface ActionCenterViewProps {
   planId: string;
@@ -132,34 +133,72 @@ export const ActionCenterView: React.FC<ActionCenterViewProps> = ({
   const [inlineEvidence, setInlineEvidence] = useState('');
   const [inlineMethod, setInlineMethod] = useState('');
 
-  // 1. Initial Load: from localStorage (or fallback to generator)
+  // 1. Initial Load: from server API if authenticated, or localStorage if guest
   useEffect(() => {
-    const existing = getGuestPlanActions(planId);
-    if (existing && existing.length > 0) {
-      setActions(existing);
-    } else {
-      const initial = generatePlanActions({
-        planId,
-        enterprise,
-        financialPlan,
-        location,
-        districtData,
-        agriAnalysis,
-        matchedSchemes
+    if (!isGuest) {
+      Promise.all([
+        apiClient.getActions(planId).catch(() => []),
+        apiClient.getEvidenceByPlan(planId).catch(() => [])
+      ]).then(([serverActions, serverEvidence]) => {
+        if (serverActions && serverActions.length > 0) {
+          setActions(serverActions);
+        } else {
+          const initial = generatePlanActions({
+            planId,
+            enterprise,
+            financialPlan,
+            location,
+            districtData,
+            agriAnalysis,
+            matchedSchemes
+          });
+          setActions(initial);
+          apiClient.saveActions(planId, initial).catch(() => {});
+        }
+
+        if (serverEvidence && serverEvidence.length > 0) {
+          setPlanEvidence(serverEvidence);
+        } else {
+          setPlanEvidence(getGuestPlanEvidence(planId));
+        }
+      }).catch(() => {
+        loadFromGuestStorage();
       });
-      setActions(initial);
-      saveGuestPlanActions(planId, initial);
+    } else {
+      loadFromGuestStorage();
     }
 
-    // Load Phase 13 Evidence
-    const storedEvidence = getGuestPlanEvidence(planId);
-    setPlanEvidence(storedEvidence);
-  }, [planId]);
+    function loadFromGuestStorage() {
+      const existing = getGuestPlanActions(planId);
+      if (existing && existing.length > 0) {
+        setActions(existing);
+      } else {
+        const initial = generatePlanActions({
+          planId,
+          enterprise,
+          financialPlan,
+          location,
+          districtData,
+          agriAnalysis,
+          matchedSchemes
+        });
+        setActions(initial);
+        saveGuestPlanActions(planId, initial);
+      }
+
+      // Load Phase 13 Evidence
+      const storedEvidence = getGuestPlanEvidence(planId);
+      setPlanEvidence(storedEvidence);
+    }
+  }, [planId, isGuest]);
 
   // Sync back to storage on changes
   const updateActionsAndPersist = (newActions: BusinessPlanAction[]) => {
     setActions(newActions);
     saveGuestPlanActions(planId, newActions);
+    if (!isGuest) {
+      apiClient.saveActions(planId, newActions).catch(() => {});
+    }
   };
 
   // Status toggle / update
@@ -302,6 +341,15 @@ export const ActionCenterView: React.FC<ActionCenterViewProps> = ({
     }
 
     if (editingEvidence) {
+      if (!isGuest) {
+        apiClient.updateEvidence(editingEvidence.id, {
+          type: evidenceType,
+          title: evidenceTitle.trim(),
+          description: evidenceDescription.trim(),
+          referenceNumber: evidenceReferenceNumber.trim() || undefined,
+          eventDate: evidenceEventDate.trim() || undefined
+        }).catch(() => {});
+      }
       const updated = updateGuestActionEvidence(editingEvidence.id, planId, {
         type: evidenceType,
         title: evidenceTitle.trim(),
@@ -313,6 +361,17 @@ export const ActionCenterView: React.FC<ActionCenterViewProps> = ({
         setPlanEvidence((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       }
     } else if (evidenceTargetActionId) {
+      if (!isGuest) {
+        apiClient.createEvidence({
+          actionId: evidenceTargetActionId,
+          planId,
+          type: evidenceType,
+          title: evidenceTitle.trim(),
+          description: evidenceDescription.trim(),
+          referenceNumber: evidenceReferenceNumber.trim() || undefined,
+          eventDate: evidenceEventDate.trim() || undefined
+        }).catch(() => {});
+      }
       const created = addGuestActionEvidence({
         actionId: evidenceTargetActionId,
         planId,
@@ -329,6 +388,9 @@ export const ActionCenterView: React.FC<ActionCenterViewProps> = ({
   };
 
   const handleDeleteEvidence = (evidenceId: string) => {
+    if (!isGuest) {
+      apiClient.deleteEvidence(evidenceId).catch(() => {});
+    }
     deleteGuestActionEvidence(evidenceId, planId);
     setPlanEvidence((prev) => prev.filter((item) => item.id !== evidenceId));
   };
@@ -409,6 +471,16 @@ export const ActionCenterView: React.FC<ActionCenterViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {onNavigateTab && (
+              <button
+                onClick={() => onNavigateTab('timeline')}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 transition cursor-pointer shadow-2xs"
+                title="View Execution Timeline & Milestones"
+              >
+                <Clock className="h-3.5 w-3.5 text-emerald-600" />
+                Timeline &amp; Health
+              </button>
+            )}
             <button
               onClick={() => setShowAddModal(true)}
               className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800 transition cursor-pointer shadow-xs"

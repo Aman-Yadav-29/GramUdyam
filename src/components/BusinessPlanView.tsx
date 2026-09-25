@@ -28,7 +28,8 @@ import {
   Share2,
   Download,
   ChevronRight,
-  CheckSquare
+  CheckSquare,
+  Clock
 } from 'lucide-react';
 
 import { BusinessPlan, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
@@ -251,6 +252,17 @@ export const BusinessPlanView: React.FC<BusinessPlanViewProps> = ({
               >
                 <CheckSquare className="h-4 w-4 text-emerald-800" />
                 <span>Action Center</span>
+              </button>
+            )}
+
+            {onNavigateTab && (
+              <button
+                onClick={() => onNavigateTab('timeline')}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer shadow-2xs"
+                title="View Execution Timeline, Milestones & Plan Health"
+              >
+                <Clock className="h-4 w-4 text-emerald-800" />
+                <span>Timeline &amp; Health</span>
               </button>
             )}
 

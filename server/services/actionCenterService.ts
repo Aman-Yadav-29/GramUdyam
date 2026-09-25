@@ -28,6 +28,14 @@ export class ActionCenterService {
   private planOwners: Map<string, string | undefined> = new Map();
 
   /**
+   * Resets in-memory store (useful for clean test execution)
+   */
+  public reset(): void {
+    this.actionsStore.clear();
+    this.planOwners.clear();
+  }
+
+  /**
    * Initializes or generates actions for a plan.
    */
   public generateOrGetActions(params: GenerateActionsParams, userId?: string): BusinessPlanAction[] {

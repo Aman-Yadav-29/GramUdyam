@@ -59,6 +59,7 @@ import { generateBankAppraisalDossier } from '../utils/bankAppraisalEngine.ts';
 import { DprReportView } from '../components/DprReportView.tsx';
 import { generateDetailedProjectReport } from '../utils/dprGenerator.ts';
 import { ActionCenterView } from '../components/ActionCenterView.tsx';
+import { ExecutionTimelineView } from '../components/ExecutionTimelineView.tsx';
 
 interface BusinessAnalysisPageProps {
   onBackToHome: () => void;
@@ -103,7 +104,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
   const { user, isGuest, isAuthenticated, logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState<
-    'discovery' | 'plan' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap' | 'workspace'
+    'discovery' | 'plan' | 'overview' | 'financials' | 'capex' | 'location' | 'schemes' | 'loans' | 'eligibility' | 'documents' | 'dpr' | 'roadmap' | 'timeline' | 'workspace'
   >('discovery');
 
   const [openedPlan, setOpenedPlan] = useState<BusinessPlan | null>(null);
@@ -717,6 +718,17 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
             >
               <CheckSquare className="h-3.5 w-3.5 text-emerald-600" />
               <span>Action Center &amp; Monitoring</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('timeline')}
+              className={`pb-2.5 border-b-2 cursor-pointer transition flex items-center gap-1.5 ${
+                activeTab === 'timeline'
+                  ? 'border-emerald-600 text-emerald-800 font-bold'
+                  : 'border-transparent text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <Clock className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Execution Timeline &amp; Health</span>
             </button>
           </nav>
         </div>
@@ -1508,6 +1520,22 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               ) : (
                 <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-stone-500">
                   Select an enterprise to view Action Center &amp; Execution Monitoring.
+                </div>
+              )
+            )}
+
+            {/* 10. EXECUTION TIMELINE & PLAN HEALTH */}
+            {activeTab === 'timeline' && (
+              selectedEnterprise ? (
+                <ExecutionTimelineView
+                  planId={openedPlan?.id || `plan_${selectedEnterprise.id}_${capitalAvailable}`}
+                  planTitle={openedPlan ? `${openedPlan.business.businessName} Plan` : `${selectedEnterprise.name} Business Plan`}
+                  isGuest={isGuest}
+                  onNavigateTab={(tab) => setActiveTab(tab as any)}
+                />
+              ) : (
+                <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-stone-500">
+                  Select an enterprise to view Execution Timeline &amp; Health Monitoring.
                 </div>
               )
             )}

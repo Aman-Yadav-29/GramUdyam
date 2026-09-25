@@ -16,6 +16,15 @@ import { AgriLocationAnalysis } from '../types/agriLocation.ts';
 import { AuthSession, UserAccount } from '../types/auth.ts';
 import { BusinessPlan, SavedBusinessPlanRecord, BusinessPlanNarrativeSection } from '../types/businessPlan.ts';
 import { BankAppraisalDossier, BankAppraisalRequest } from '../types/bankAppraisal.ts';
+import { BusinessPlanAction } from '../types/actionCenter.ts';
+import { ExecutionEvidence, CreateEvidenceInput, UpdateEvidenceInput } from '../types/executionEvidence.ts';
+import {
+  ExecutionTimelineEvent,
+  ExecutionMilestone,
+  PlanHealthSummary,
+  CreateUserNoteEventInput,
+  UpdateUserNoteEventInput
+} from '../types/executionTimeline.ts';
 
 const SESSION_STORAGE_KEY = 'gramudyam_auth_session';
 
@@ -384,6 +393,128 @@ class ApiClient {
         shareToken: string;
       };
     }>(`/api/business-plans/shared/${token}`);
+    return res.data;
+  }
+
+  // Phase 12: Action Center
+  public async getActions(planId: string): Promise<BusinessPlanAction[]> {
+    const res = await this.request<{ success: boolean; data: BusinessPlanAction[] }>(`/api/action-center/${planId}`);
+    return res.data || [];
+  }
+
+  public async saveActions(planId: string, actions: BusinessPlanAction[]): Promise<BusinessPlanAction[]> {
+    const res = await this.request<{ success: boolean; data: BusinessPlanAction[] }>(`/api/action-center/${planId}`, {
+      method: 'POST',
+      body: JSON.stringify({ actions })
+    });
+    return res.data || [];
+  }
+
+  // Phase 13: Execution Evidence & Progress Records
+  public async createEvidence(input: CreateEvidenceInput): Promise<ExecutionEvidence> {
+    const res = await this.request<{ success: boolean; data: ExecutionEvidence }>('/api/execution-evidence', {
+      method: 'POST',
+      body: JSON.stringify(input)
+    });
+    return res.data;
+  }
+
+  public async getEvidenceByAction(actionId: string, planId: string): Promise<ExecutionEvidence[]> {
+    const res = await this.request<{ success: boolean; data: ExecutionEvidence[] }>(
+      `/api/execution-evidence/action/${actionId}?planId=${encodeURIComponent(planId)}`
+    );
+    return res.data || [];
+  }
+
+  public async getEvidenceByPlan(planId: string): Promise<ExecutionEvidence[]> {
+    const res = await this.request<{ success: boolean; data: ExecutionEvidence[] }>(
+      `/api/execution-evidence/plan/${encodeURIComponent(planId)}`
+    );
+    return res.data || [];
+  }
+
+  public async getEvidenceById(id: string): Promise<ExecutionEvidence> {
+    const res = await this.request<{ success: boolean; data: ExecutionEvidence }>(
+      `/api/execution-evidence/${encodeURIComponent(id)}`
+    );
+    return res.data;
+  }
+
+  public async updateEvidence(id: string, updates: UpdateEvidenceInput): Promise<ExecutionEvidence> {
+    const res = await this.request<{ success: boolean; data: ExecutionEvidence }>(
+      `/api/execution-evidence/${encodeURIComponent(id)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(updates)
+      }
+    );
+    return res.data;
+  }
+
+  public async deleteEvidence(id: string): Promise<boolean> {
+    const res = await this.request<{ success: boolean; data: { deleted: boolean } }>(
+      `/api/execution-evidence/${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE'
+      }
+    );
+    return res.data?.deleted ?? true;
+  }
+
+  // Phase 14: Execution Timeline, Milestones & Plan Health
+  public async getExecutionTimeline(planId: string): Promise<ExecutionTimelineEvent[]> {
+    const res = await this.request<{ success: boolean; data: ExecutionTimelineEvent[] }>(
+      `/api/execution-timeline/${encodeURIComponent(planId)}`
+    );
+    return res.data || [];
+  }
+
+  public async createTimelineEvent(input: CreateUserNoteEventInput): Promise<ExecutionTimelineEvent> {
+    const res = await this.request<{ success: boolean; data: ExecutionTimelineEvent }>(
+      '/api/execution-timeline/events',
+      {
+        method: 'POST',
+        body: JSON.stringify(input)
+      }
+    );
+    return res.data;
+  }
+
+  public async updateTimelineEvent(
+    eventId: string,
+    updates: UpdateUserNoteEventInput
+  ): Promise<ExecutionTimelineEvent> {
+    const res = await this.request<{ success: boolean; data: ExecutionTimelineEvent }>(
+      `/api/execution-timeline/events/${encodeURIComponent(eventId)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(updates)
+      }
+    );
+    return res.data;
+  }
+
+  public async deleteTimelineEvent(eventId: string): Promise<boolean> {
+    const res = await this.request<{ success: boolean; data: { deleted: boolean } }>(
+      `/api/execution-timeline/events/${encodeURIComponent(eventId)}`,
+      {
+        method: 'DELETE'
+      }
+    );
+    return res.data?.deleted ?? true;
+  }
+
+  public async getExecutionMilestones(planId: string): Promise<ExecutionMilestone[]> {
+    const res = await this.request<{ success: boolean; data: ExecutionMilestone[] }>(
+      `/api/execution-timeline/${encodeURIComponent(planId)}/milestones`
+    );
+    return res.data || [];
+  }
+
+  public async getPlanHealth(planId: string): Promise<PlanHealthSummary> {
+    const res = await this.request<{ success: boolean; data: PlanHealthSummary }>(
+      `/api/execution-timeline/${encodeURIComponent(planId)}/health`
+    );
     return res.data;
   }
 }
