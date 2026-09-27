@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://gramudyam.onrender.com/api/:path*"
+    }
+  ]
+}
