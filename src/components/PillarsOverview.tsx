@@ -111,11 +111,11 @@ export const PillarsOverview: React.FC<PillarsOverviewProps> = ({ onSelectPillar
   ];
 
   return (
-    <section id="pillars" className="py-16 sm:py-24 bg-stone-50 border-b border-stone-200">
+    <section id="pillars" className="py-16 sm:py-24 bg-stone-50 border-b border-stone-200 scroll-mt-18">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-14">
           <h2 className="text-xs font-bold uppercase tracking-widest text-emerald-800">
-            System Architecture & Core Capabilities
+            Enterprise Planning & Core Capabilities
           </h2>
           <p className="mt-2 font-heading text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
             The 7 Pillars of GramUdyam

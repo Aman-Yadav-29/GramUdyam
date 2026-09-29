@@ -6,14 +6,13 @@ interface AuthModalProps {
   isOpen: boolean;
   initialMode?: 'login' | 'register';
   onClose: () => void;
-  onContinueAsGuest: () => void;
+  onContinueAsGuest?: () => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   initialMode = 'login',
-  onClose,
-  onContinueAsGuest
+  onClose
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [email, setEmail] = useState('');
@@ -60,7 +59,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }, 600);
       }
     } catch (err: any) {
-      setFormError(err.message || 'Authentication failed. You can also continue as guest.');
+      setFormError(err.message || 'Authentication failed. Please check your credentials.');
     }
   };
 
@@ -214,35 +213,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {loading ? 'Processing...' : mode === 'login' ? 'Login' : 'Create Account'}
           </button>
         </form>
-
-        {/* Divider */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-stone-200" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-stone-400 font-semibold">Or</span>
-          </div>
-        </div>
-
-        {/* Continue as Guest Button - Explicit and prominent */}
-        <div className="space-y-2">
-          <button
-            type="button"
-            id="modal-continue-guest-button"
-            onClick={() => {
-              onContinueAsGuest();
-              onClose();
-            }}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-stone-50 py-2.5 text-xs font-bold text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition cursor-pointer"
-          >
-            <ShieldCheck className="h-4 w-4 text-emerald-700" />
-            <span>Continue as Guest (No Login Required)</span>
-          </button>
-          <p className="text-center text-2xs text-stone-500">
-            Login is completely optional. You can test all business discovery, location intelligence, and loan calculations immediately.
-          </p>
-        </div>
       </div>
     </div>
   );

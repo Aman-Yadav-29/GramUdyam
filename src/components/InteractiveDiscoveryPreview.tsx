@@ -67,13 +67,13 @@ export const InteractiveDiscoveryPreview: React.FC<InteractiveDiscoveryPreviewPr
   };
 
   return (
-    <section id="discovery-sandbox" className="py-16 sm:py-24 bg-stone-100/70 border-b border-stone-200">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="discovery" className="py-16 sm:py-24 bg-stone-100/70 border-b border-stone-200 scroll-mt-18">
+      <div id="discovery-sandbox" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 mb-2">
               <Sliders className="h-3.5 w-3.5 text-emerald-700" />
-              <span>Interactive Decision Sandbox (Guest Mode Enabled)</span>
+              <span>Interactive Decision Sandbox</span>
             </div>
             <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
               Test Real Capital & Location Feasibility
@@ -428,7 +428,7 @@ export const InteractiveDiscoveryPreview: React.FC<InteractiveDiscoveryPreviewPr
                 <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-stone-100">
                   <span className="text-2xs text-stone-500 flex items-center gap-1">
                     <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Calculations saved automatically to your Guest Session</span>
+                    <span>Calculations saved automatically in your browser session</span>
                   </span>
                   <button
                     onClick={onFullAnalysis}

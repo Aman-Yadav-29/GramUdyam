@@ -187,8 +187,8 @@ export const SavedPlansWorkspace: React.FC<SavedPlansWorkspaceProps> = ({
             <div className="flex items-start gap-2.5">
               <Info className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold">Guest Mode Workspace:</span> These plans are stored locally in your browser's storage on this device.
-                To preserve plans permanently across devices or share with verified ownership, sign in or register.
+                <span className="font-bold">Local Device Storage:</span> These plans are stored locally in your browser on this device.
+                To preserve plans permanently across devices or share with verified ownership, sign in or create an account.
               </div>
             </div>
             {onNavigateToLogin && (

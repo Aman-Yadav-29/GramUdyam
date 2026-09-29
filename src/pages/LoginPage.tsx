@@ -5,17 +5,28 @@ import { validateLoginPayload } from '../validation/authValidator.ts';
 
 interface LoginPageProps {
   onNavigateToRegister: () => void;
-  onContinueAsGuest: () => void;
+  onReturnToAnalysis?: () => void;
+  onContinueAsGuest?: () => void;
   onLoginSuccess: () => void;
   onNavigateHome: () => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   onNavigateToRegister,
+  onReturnToAnalysis,
   onContinueAsGuest,
   onLoginSuccess,
   onNavigateHome
 }) => {
+  const handleReturn = () => {
+    if (onReturnToAnalysis) {
+      onReturnToAnalysis();
+    } else if (onContinueAsGuest) {
+      onContinueAsGuest();
+    } else {
+      onNavigateHome();
+    }
+  };
   const { login, loading, error: authError } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -167,32 +178,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
             <div className="relative flex justify-center text-xs">
               <span className="bg-white px-3 text-stone-400 font-semibold uppercase tracking-wider text-2xs">
-                Or Continue With
+                Or
               </span>
             </div>
           </div>
 
           <div className="space-y-3">
-            {/* Button 2: Continue as Guest */}
-            <button
-              id="login-continue-guest-button"
-              type="button"
-              onClick={onContinueAsGuest}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-xs font-bold text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition cursor-pointer shadow-2xs"
-            >
-              <ShieldCheck className="h-4 w-4 text-emerald-700" />
-              <span>Continue as Guest</span>
-            </button>
-
-            {/* Button 3: Create Account */}
+            {/* Create Account */}
             <button
               id="login-create-account-button"
               type="button"
               onClick={onNavigateToRegister}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-xs font-bold text-stone-800 hover:bg-stone-100 transition cursor-pointer shadow-2xs"
             >
-              <UserPlus className="h-4 w-4 text-stone-500" />
-              <span>Create Account</span>
+              <UserPlus className="h-4 w-4 text-emerald-700" />
+              <span>Create New Account</span>
+            </button>
+
+            {/* Return to Business Analysis */}
+            <button
+              id="login-return-analysis-button"
+              type="button"
+              onClick={handleReturn}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-medium text-stone-600 hover:bg-stone-50 transition cursor-pointer"
+            >
+              <ArrowRight className="h-3.5 w-3.5 rotate-180" />
+              <span>Return to Business Analysis</span>
             </button>
           </div>
 

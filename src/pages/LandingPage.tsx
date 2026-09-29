@@ -1,45 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Navbar } from '../components/Navbar.tsx';
 import { HeroSection } from '../components/HeroSection.tsx';
 import { CoreQuestionCard } from '../components/CoreQuestionCard.tsx';
 import { PillarsOverview } from '../components/PillarsOverview.tsx';
 import { InteractiveDiscoveryPreview } from '../components/InteractiveDiscoveryPreview.tsx';
-import { AuthModal } from '../components/AuthModal.tsx';
 import { Footer } from '../components/Footer.tsx';
 import { 
-  Server, 
-  Layers, 
-  Database, 
-  Cpu, 
-  FolderTree, 
-  ShieldCheck, 
-  CheckCircle,
-  FileCode,
-  ArrowRight
+  Award, 
+  BadgePercent, 
+  ArrowRight, 
+  Building2, 
+  ShieldCheck
 } from 'lucide-react';
 
 interface LandingPageProps {
   onNavigateToAnalysis: () => void;
   onNavigateToLogin: () => void;
-  onNavigateToRegister: () => void;
+  onNavigateToRegister?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ 
   onNavigateToAnalysis,
-  onNavigateToLogin,
-  onNavigateToRegister
+  onNavigateToLogin
 }) => {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-
-  const handleOpenAuth = (mode: 'login' | 'register') => {
-    if (mode === 'login') {
-      onNavigateToLogin();
-    } else {
-      onNavigateToRegister();
-    }
-  };
-
   const handleScrollToPillars = () => {
     const el = document.getElementById('pillars');
     if (el) {
@@ -47,161 +30,206 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
   };
 
-  const handleScrollToSandbox = () => {
-    const el = document.getElementById('discovery-sandbox');
+  const handleScrollToDiscovery = () => {
+    const el = document.getElementById('discovery');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
+  const handleScrollToSchemes = () => {
+    const el = document.getElementById('schemes');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const flagshipSchemes = [
+    {
+      id: 'pmegp',
+      name: 'Prime Minister’s Employment Generation Programme',
+      shortName: 'PMEGP',
+      authority: 'Khadi & Village Industries Commission (KVIC) / DIC',
+      subsidy: '15% – 35% Capital Subsidy',
+      maxProject: '₹50 Lakhs (Mfg) / ₹20 Lakhs (Service)',
+      promoterEquity: '5% (Special) / 10% (General)',
+      description: 'Flagship central credit-linked subsidy programme to establish new micro-enterprises in rural & semi-urban manufacturing and service sectors.',
+      tags: ['Manufacturing', 'Rural Units', 'Credit-Linked Subsidy']
+    },
+    {
+      id: 'pmfme',
+      name: 'PM Formalisation of Micro food processing Enterprises',
+      shortName: 'PMFME',
+      authority: 'Ministry of Food Processing Industries (MoFPI)',
+      subsidy: '35% Capital Subsidy (up to ₹10 Lakhs)',
+      maxProject: 'Based on eligible machinery CAPEX',
+      promoterEquity: '10% minimum contribution',
+      description: 'Specialized scheme for individual micro food processing units, farmer producer organizations (FPOs), and SHGs, prioritized around One District One Product (ODOP).',
+      tags: ['Food Processing', 'Agro-Allied', 'ODOP Priority']
+    },
+    {
+      id: 'mudra',
+      name: 'Pradhan Mantri MUDRA Yojana',
+      shortName: 'PMMY (Mudra)',
+      authority: 'National Credit Guarantee Trustee Company (NCGTC)',
+      subsidy: 'Collateral-Free Credit Guarantee',
+      maxProject: 'Up to ₹10 Lakhs (Shishu / Kishore / Tarun)',
+      promoterEquity: 'Zero to minimal margin required',
+      description: 'Institutional micro-credit for non-corporate, non-farm small/micro enterprises across public sector banks, RRBs, and micro-finance institutions.',
+      tags: ['Collateral-Free', 'Micro Credit', 'Working Capital']
+    },
+    {
+      id: 'aif',
+      name: 'Agriculture Infrastructure Fund',
+      shortName: 'AIF',
+      authority: 'Department of Agriculture & Farmers Welfare',
+      subsidy: '3% Interest Subvention (up to 7 yrs)',
+      maxProject: 'Term loan up to ₹2 Crore per project',
+      promoterEquity: '10% – 15% contribution',
+      description: 'Medium-to-long term debt financing facility for post-harvest management infrastructure, cold chains, primary processing, and sorting hubs.',
+      tags: ['Post-Harvest', 'Interest Subvention', 'Agri-Infrastructure']
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col selection:bg-emerald-200 selection:text-emerald-950">
-      {/* Navigation */}
+      {/* User-Facing Navigation */}
       <Navbar
-        onOpenAuth={handleOpenAuth}
-        onNavigateToAnalysis={onNavigateToAnalysis}
+        onNavigateToLogin={onNavigateToLogin}
         onScrollToPillars={handleScrollToPillars}
+        onScrollToDiscovery={handleScrollToDiscovery}
+        onScrollToSchemes={handleScrollToSchemes}
       />
 
       {/* Hero Section */}
       <HeroSection
         onStartAnalysis={onNavigateToAnalysis}
-        onOpenAuth={handleOpenAuth}
-        onContinueGuest={handleScrollToSandbox}
       />
 
       {/* Core Question Highlight Section */}
-      <CoreQuestionCard onTriggerAnalysis={handleScrollToSandbox} />
+      <CoreQuestionCard onTriggerAnalysis={handleScrollToDiscovery} />
 
       {/* Interactive Discovery Sandbox Preview */}
       <InteractiveDiscoveryPreview onFullAnalysis={onNavigateToAnalysis} />
 
       {/* The 7 Core Pillars Overview */}
-      <PillarsOverview onSelectPillar={() => handleScrollToSandbox()} />
+      <PillarsOverview onSelectPillar={() => handleScrollToDiscovery()} />
 
-      {/* Platform Technical Architecture Showcase */}
-      <section id="architecture" className="py-16 sm:py-24 bg-white border-b border-stone-200">
+      {/* Government Schemes Showcase Section */}
+      <section id="schemes" className="py-16 sm:py-24 bg-white border-b border-stone-200 scroll-mt-18">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mb-12">
-            <div className="inline-flex items-center gap-1.5 rounded-md bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-700 mb-3">
-              <Layers className="h-3.5 w-3.5 text-stone-900" />
-              <span>Phase 1 Production Architecture</span>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 rounded-md bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-800 mb-2">
+                <Award className="h-3.5 w-3.5 text-purple-700" />
+                <span>Credit-Linked Government Assistance</span>
+              </div>
+              <h2 className="font-heading text-3xl font-extrabold text-stone-900 tracking-tight">
+                Government Schemes & Capital Subsidies
+              </h2>
+              <p className="mt-2 text-sm text-stone-600 max-w-2xl leading-relaxed">
+                GramUdyam integrates verified central and state credit schemes. Discover your exact eligibility, capital subsidy ceilings, and bank loan structures in minutes.
+              </p>
             </div>
-            <h2 className="font-heading text-3xl font-extrabold text-stone-900 tracking-tight">
-              Decoupled, Modular Architecture
-            </h2>
-            <p className="mt-2 text-sm text-stone-600 leading-relaxed">
-              GramUdyam enforces clean separation of concerns across presentation, domain calculation services, database adapters, and external subsidy/banking APIs.
-            </p>
+
+            <button
+              onClick={onNavigateToAnalysis}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-emerald-800 transition cursor-pointer self-start md:self-auto shrink-0"
+            >
+              <span>Check Eligibility For My Project</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/50 p-6">
-              <div className="flex items-center gap-2.5 mb-3 text-stone-900 font-heading font-bold text-base">
-                <FolderTree className="h-5 w-5 text-emerald-700" />
-                <span>Frontend & Client Hooks</span>
+          {/* Scheme Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {flagshipSchemes.map((scheme) => (
+              <div
+                key={scheme.id}
+                className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 sm:p-7 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <span className="font-heading text-lg font-bold text-stone-900">
+                      {scheme.shortName}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-900">
+                      <BadgePercent className="h-3.5 w-3.5 text-emerald-700" />
+                      <span>{scheme.subsidy}</span>
+                    </span>
+                  </div>
+
+                  <h3 className="text-xs font-semibold text-stone-700 mb-1">
+                    {scheme.name}
+                  </h3>
+
+                  <div className="flex items-center gap-1.5 text-2xs text-stone-500 mb-3">
+                    <Building2 className="h-3.5 w-3.5 text-stone-400" />
+                    <span>{scheme.authority}</span>
+                  </div>
+
+                  <p className="text-xs text-stone-600 leading-relaxed mb-4">
+                    {scheme.description}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2 text-2xs bg-white p-3 rounded-xl border border-stone-200/80 mb-4">
+                    <div>
+                      <span className="text-stone-400 block">Maximum Project Scale:</span>
+                      <strong className="text-stone-800 font-semibold">{scheme.maxProject}</strong>
+                    </div>
+                    <div>
+                      <span className="text-stone-400 block">Promoter Margin:</span>
+                      <strong className="text-emerald-800 font-semibold">{scheme.promoterEquity}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-stone-200/70 flex items-center justify-between">
+                  <div className="flex flex-wrap gap-1.5">
+                    {scheme.tags.map((tag, idx) => (
+                      <span key={idx} className="rounded-md bg-stone-100 px-2 py-0.5 text-3xs font-medium text-stone-600">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={onNavigateToAnalysis}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-900 transition cursor-pointer shrink-0 ml-2"
+                  >
+                    <span>Analyze Fit</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-stone-600 mb-4">
-                React 19 + Tailwind CSS with dedicated custom hooks (<code>useAuth</code>, <code>useBusinessAnalysis</code>, <code>useSystemHealth</code>).
+            ))}
+          </div>
+
+          {/* Bottom Action Banner */}
+          <div className="mt-12 rounded-2xl bg-gradient-to-r from-emerald-800 to-emerald-900 text-white p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-200 mb-1">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Instant Subsidy Evaluation</span>
+              </div>
+              <h3 className="font-heading text-xl sm:text-2xl font-bold">
+                Unsure which subsidy applies to your location and category?
+              </h3>
+              <p className="mt-1 text-xs sm:text-sm text-emerald-100 max-w-2xl">
+                Our rule engine automatically cross-references your district, enterprise category, and capital to match the highest eligible subsidy.
               </p>
-              <ul className="space-y-1.5 text-2xs text-stone-500 font-mono">
-                <li>• /src/components/ (Navbar, Hero, Sandbox, Modals)</li>
-                <li>• /src/pages/ (LandingPage, BusinessAnalysisPage)</li>
-                <li>• /src/hooks/ (Reactive state & API contracts)</li>
-                <li>• /src/services/ (Typed API Client)</li>
-              </ul>
             </div>
 
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/50 p-6">
-              <div className="flex items-center gap-2.5 mb-3 text-stone-900 font-heading font-bold text-base">
-                <Server className="h-5 w-5 text-blue-700" />
-                <span>Backend Express API & Controllers</span>
-              </div>
-              <p className="text-xs text-stone-600 mb-4">
-                Dedicated Express routes mounted cleanly under <code>/api/*</code> with centralized request validation and standard JSON envelopes.
-              </p>
-              <ul className="space-y-1.5 text-2xs text-stone-500 font-mono">
-                <li>• /server/routes/ (business, financial, schemes, loans, gis)</li>
-                <li>• /server/controllers/ (Handler routing & error handling)</li>
-                <li>• /src/validation/ (Input boundary schema checks)</li>
-                <li>• /server.ts (Express + Vite Middleware entry point)</li>
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/50 p-6">
-              <div className="flex items-center gap-2.5 mb-3 text-stone-900 font-heading font-bold text-base">
-                <Cpu className="h-5 w-5 text-purple-700" />
-                <span>Business & Calculation Engines</span>
-              </div>
-              <p className="text-xs text-stone-600 mb-4">
-                Pure business services executing mathematical financial modeling, reducing-balance EMI amortization, and subsidy evaluations.
-              </p>
-              <ul className="space-y-1.5 text-2xs text-stone-500 font-mono">
-                <li>• /server/services/businessService.ts</li>
-                <li>• /server/services/financialEngineService.ts</li>
-                <li>• /server/services/schemeEngineService.ts</li>
-                <li>• /server/services/loanEngineService.ts</li>
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/50 p-6">
-              <div className="flex items-center gap-2.5 mb-3 text-stone-900 font-heading font-bold text-base">
-                <Database className="h-5 w-5 text-amber-700" />
-                <span>Database & Models</span>
-              </div>
-              <p className="text-xs text-stone-600 mb-4">
-                Pluggable database configuration supporting external PostgreSQL via <code>DATABASE_URL</code> with automatic memory-store fallback.
-              </p>
-              <ul className="space-y-1.5 text-2xs text-stone-500 font-mono">
-                <li>• /server/models/database.ts (Pool & Config manager)</li>
-                <li>• /server/models/schema.ts (Entity repositories)</li>
-                <li>• /src/data/ (Schemes, Enterprises, Districts)</li>
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/50 p-6">
-              <div className="flex items-center gap-2.5 mb-3 text-stone-900 font-heading font-bold text-base">
-                <Layers className="h-5 w-5 text-teal-700" />
-                <span>Location GIS & Benchmarks</span>
-              </div>
-              <p className="text-xs text-stone-600 mb-4">
-                District-level raw material catchment, agro-climatic zones, and DIC contact directories across Indian states.
-              </p>
-              <ul className="space-y-1.5 text-2xs text-stone-500 font-mono">
-                <li>• /server/services/locationGisService.ts</li>
-                <li>• /src/data/locationBenchmarksData.ts</li>
-                <li>• GIS district intelligence endpoints</li>
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/50 p-6">
-              <div className="flex items-center gap-2.5 mb-3 text-stone-900 font-heading font-bold text-base">
-                <ShieldCheck className="h-5 w-5 text-emerald-700" />
-                <span>Auth & AI Integration</span>
-              </div>
-              <p className="text-xs text-stone-600 mb-4">
-                Non-blocking Guest sessions for instant accessibility, plus optional account creation and Gemini AI advisory integration.
-              </p>
-              <ul className="space-y-1.5 text-2xs text-stone-500 font-mono">
-                <li>• /server/services/authService.ts (Guest + User)</li>
-                <li>• /server/services/aiService.ts (Gemini lazy client)</li>
-                <li>• Safe server-only environment credentials</li>
-              </ul>
-            </div>
+            <button
+              onClick={onNavigateToAnalysis}
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-emerald-950 shadow-md hover:bg-emerald-50 transition cursor-pointer shrink-0"
+            >
+              <span>Start Your Business Analysis</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </section>
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        initialMode={authMode}
-        onClose={() => setAuthModalOpen(false)}
-        onContinueAsGuest={() => {
-          setAuthModalOpen(false);
-          handleScrollToSandbox();
-        }}
-      />
 
       {/* Footer */}
       <Footer />

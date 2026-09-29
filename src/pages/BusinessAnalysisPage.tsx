@@ -208,7 +208,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
         locationType
       },
       promoterProfile: {
-        name: user?.fullName || (isGuest ? 'Guest Entrepreneur' : 'Promoter / Entrepreneur'),
+        name: user?.fullName || 'Promoter / Entrepreneur',
         isRural: locationType === 'rural',
         socialCategory: promoterCategory === 'special' ? 'Special Category (SC/ST/Woman/OBC)' : 'General Category',
         isNewBusiness: true
@@ -288,14 +288,11 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" />
-                  <span>Guest Session (All Features Unlocked)</span>
-                </div>
                 {onNavigateToLogin && (
                   <button
+                    id="analysis-header-login-button"
                     onClick={onNavigateToLogin}
-                    className="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 transition cursor-pointer shadow-2xs"
                   >
                     <LogIn className="h-3.5 w-3.5" />
                     <span>Login</span>
@@ -1560,7 +1557,7 @@ export const BusinessAnalysisPage: React.FC<BusinessAnalysisPageProps> = ({
                   planTitle={openedPlan ? `${openedPlan.business.businessName} Plan` : `${selectedEnterprise.name} Business Plan`}
                   business={selectedEnterprise}
                   promoterProfile={{
-                    name: user?.fullName || (isGuest ? 'Guest Entrepreneur' : 'Promoter / Entrepreneur'),
+                    name: user?.fullName || 'Promoter / Entrepreneur',
                     socialCategory: promoterCategory === 'special' ? 'Special Category (SC/ST/Woman/OBC)' : 'General Category',
                     isRural: locationType === 'rural'
                   }}

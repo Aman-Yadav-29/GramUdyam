@@ -19,21 +19,21 @@ export const Footer: React.FC = () => {
             </p>
             <div className="flex items-center gap-1.5 text-2xs text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 w-fit">
               <Shield className="h-3 w-3 text-emerald-700" />
-              <span>Built on Production Architecture</span>
+              <span>Empowering Rural & MSME Enterprises</span>
             </div>
           </div>
 
-          {/* Col 2: Core Engines */}
+          {/* Col 2: Core Capabilities */}
           <div>
             <h4 className="font-bold text-stone-900 uppercase tracking-wider text-2xs mb-3">
-              Core Engines
+              Core Capabilities
             </h4>
             <ul className="space-y-2">
               <li><span className="text-stone-600 hover:text-stone-900">Capital-to-Idea Matcher</span></li>
-              <li><span className="text-stone-600 hover:text-stone-900">CAPEX & Working Capital Engine</span></li>
+              <li><span className="text-stone-600 hover:text-stone-900">CAPEX & Working Capital Sizing</span></li>
               <li><span className="text-stone-600 hover:text-stone-900">GIS District Intelligence Catchment</span></li>
               <li><span className="text-stone-600 hover:text-stone-900">Bank DSCR & Amortization Modeler</span></li>
-              <li><span className="text-stone-600 hover:text-stone-900">AI Detailed Project Report (DPR)</span></li>
+              <li><span className="text-stone-600 hover:text-stone-900">Bankable Detailed Project Report (DPR)</span></li>
             </ul>
           </div>
 
@@ -90,18 +90,19 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 4: Extensible Architecture & Phase Roadmap */}
+          {/* Col 4: Platform Advisory */}
           <div>
             <h4 className="font-bold text-stone-900 uppercase tracking-wider text-2xs mb-3">
-              Extensible Roadmap
+              Enterprise Advisory
             </h4>
             <p className="text-stone-500 text-2xs leading-relaxed mb-2">
-              Phase 1 establishes the production-grade modular foundation across API routes, domain services, financial mathematics, and location datasets.
+              Transforming fragmented rural schemes and capital constraints into bankable enterprise roadmaps.
             </p>
-            <div className="space-y-1 text-2xs text-stone-500">
-              <div>• Phase 1: Core Foundation & Landing</div>
-              <div>• Phase 2: Deep Financial & GIS Engine</div>
-              <div>• Phase 3: AI Advisory & Bank DPR Export</div>
+            <div className="space-y-1.5 text-2xs text-stone-600">
+              <div>• Enterprise Discovery & Sizing</div>
+              <div>• District Raw Material Matching</div>
+              <div>• Capital Subsidy Evaluation (PMEGP/PMFME)</div>
+              <div>• Bank Appraisal & Execution Timelines</div>
             </div>
           </div>
         </div>

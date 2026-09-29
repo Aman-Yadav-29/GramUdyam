@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
-import { Sprout, User, Mail, Lock, UserPlus, LogIn, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Sprout, User, Mail, Lock, UserPlus, LogIn, ShieldCheck, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.ts';
 import { validateRegisterPayload } from '../validation/authValidator.ts';
 
 interface RegisterPageProps {
   onNavigateToLogin: () => void;
-  onContinueAsGuest: () => void;
+  onReturnToAnalysis?: () => void;
+  onContinueAsGuest?: () => void;
   onRegisterSuccess: () => void;
   onNavigateHome: () => void;
 }
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({
   onNavigateToLogin,
+  onReturnToAnalysis,
   onContinueAsGuest,
   onRegisterSuccess,
   onNavigateHome
 }) => {
+  const handleReturn = () => {
+    if (onReturnToAnalysis) {
+      onReturnToAnalysis();
+    } else if (onContinueAsGuest) {
+      onContinueAsGuest();
+    } else {
+      onNavigateHome();
+    }
+  };
   const { register, loading } = useAuth();
 
   const [name, setName] = useState('');
@@ -231,26 +242,26 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
           </div>
 
           <div className="space-y-3">
-            {/* Button 2: Continue as Guest */}
-            <button
-              id="register-continue-guest-button"
-              type="button"
-              onClick={onContinueAsGuest}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-xs font-bold text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition cursor-pointer shadow-2xs"
-            >
-              <ShieldCheck className="h-4 w-4 text-emerald-700" />
-              <span>Continue as Guest</span>
-            </button>
-
-            {/* Button 3: Login */}
+            {/* Button 2: Login */}
             <button
               id="register-login-button"
               type="button"
               onClick={onNavigateToLogin}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-xs font-bold text-stone-800 hover:bg-stone-100 transition cursor-pointer shadow-2xs"
             >
-              <LogIn className="h-4 w-4 text-stone-500" />
+              <LogIn className="h-4 w-4 text-emerald-700" />
               <span>Already have an account? Login</span>
+            </button>
+
+            {/* Button 3: Return to Business Analysis */}
+            <button
+              id="register-return-analysis-button"
+              type="button"
+              onClick={handleReturn}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-medium text-stone-600 hover:bg-stone-50 transition cursor-pointer"
+            >
+              <ArrowRight className="h-3.5 w-3.5 rotate-180" />
+              <span>Return to Business Analysis</span>
             </button>
           </div>
         </div>

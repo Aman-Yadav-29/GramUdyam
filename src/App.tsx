@@ -102,6 +102,7 @@ export default function App() {
       {currentRoute.page === 'login' && (
         <LoginPage
           onNavigateToRegister={() => navigateTo('register')}
+          onReturnToAnalysis={() => navigateTo('analysis')}
           onContinueAsGuest={() => navigateTo('analysis')}
           onLoginSuccess={() => navigateTo('analysis')}
           onNavigateHome={() => navigateTo('landing')}
@@ -111,6 +112,7 @@ export default function App() {
       {currentRoute.page === 'register' && (
         <RegisterPage
           onNavigateToLogin={() => navigateTo('login')}
+          onReturnToAnalysis={() => navigateTo('analysis')}
           onContinueAsGuest={() => navigateTo('analysis')}
           onRegisterSuccess={() => navigateTo('analysis')}
           onNavigateHome={() => navigateTo('landing')}
